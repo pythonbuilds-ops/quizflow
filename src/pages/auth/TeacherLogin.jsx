@@ -8,6 +8,7 @@ const TeacherLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
+    const [secretCode, setSecretCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -23,6 +24,9 @@ const TeacherLogin = () => {
             if (isLogin) {
                 await signIn(email, password);
             } else {
+                if (secretCode !== 'SUPABASE') {
+                    throw new Error('Invalid secret code. You are not authorized to create a teacher account.');
+                }
                 await signUpTeacher(email, password, fullName);
             }
             navigate('/dashboard');
@@ -64,16 +68,29 @@ const TeacherLogin = () => {
 
                 <form onSubmit={handleSubmit}>
                     {!isLogin && (
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label className="label">Full Name</label>
-                            <input
-                                type="text"
-                                className="input"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                required
-                            />
-                        </div>
+                        <>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label className="label">Full Name</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label className="label">Secret Code</label>
+                                <input
+                                    type="password"
+                                    className="input"
+                                    value={secretCode}
+                                    onChange={(e) => setSecretCode(e.target.value)}
+                                    placeholder="Enter teacher access code"
+                                    required
+                                />
+                            </div>
+                        </>
                     )}
                     <div style={{ marginBottom: '1rem' }}>
                         <label className="label">Email Address</label>
