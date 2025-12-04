@@ -27,7 +27,7 @@ export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress
     // The user's code had `const MODEL_NAME = 'gemini-2.5-pro';`.
     // I will change it to 'gemini-1.5-pro' and add a comment.
 
-    const MODEL_NAME_ACTUAL = 'gemini-1.5-pro';
+    const MODEL_NAME_ACTUAL = 'gemini-2.5-pro';
 
     onProgress?.('Preparing PDF for analysis...');
 
