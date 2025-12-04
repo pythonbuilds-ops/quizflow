@@ -76,8 +76,8 @@ const TestResult = () => {
         }
 
         // Handle MCQ with single or multiple correct answers
-        const correctAnswers = question.correctAnswer.split(',').map(a => a.trim());
-        const studentAnswers = studentAnswer.split(',').map(a => a.trim());
+        const correctAnswers = String(question.correctAnswer).split(',').map(a => a.trim());
+        const studentAnswers = String(studentAnswer).split(',').map(a => a.trim());
 
         const correctSelected = studentAnswers.filter(ans => correctAnswers.includes(ans));
         const wrongSelected = studentAnswers.filter(ans => !correctAnswers.includes(ans));

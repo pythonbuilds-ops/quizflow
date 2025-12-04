@@ -126,8 +126,8 @@ const TestAnalytics = () => {
             }
 
             // Handle MCQ with partial marking
-            const correctAnswers = q.correctAnswer.split(',').map(a => a.trim());
-            const studentAnswers = studentAnswer.split(',').map(a => a.trim());
+            const correctAnswers = String(q.correctAnswer).split(',').map(a => a.trim());
+            const studentAnswers = String(studentAnswer).split(',').map(a => a.trim());
             const correctSelected = studentAnswers.filter(ans => correctAnswers.includes(ans));
             const wrongSelected = studentAnswers.filter(ans => !correctAnswers.includes(ans));
 
@@ -227,8 +227,8 @@ const TestAnalytics = () => {
                                         if (q.type === 'integer') {
                                             isCorrect = Math.abs(parseFloat(studentAnswer) - parseFloat(q.correctAnswer)) < 0.01;
                                         } else {
-                                            const correctAnswers = q.correctAnswer.split(',').map(a => a.trim());
-                                            const studentAnswers = studentAnswer.split(',').map(a => a.trim());
+                                            const correctAnswers = String(q.correctAnswer).split(',').map(a => a.trim());
+                                            const studentAnswers = String(studentAnswer).split(',').map(a => a.trim());
                                             const correctSelected = studentAnswers.filter(ans => correctAnswers.includes(ans));
                                             const wrongSelected = studentAnswers.filter(ans => !correctAnswers.includes(ans));
                                             isCorrect = wrongSelected.length === 0 && correctSelected.length === correctAnswers.length;

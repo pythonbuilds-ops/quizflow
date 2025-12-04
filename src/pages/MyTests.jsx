@@ -110,7 +110,7 @@ const MyTests = () => {
                         </button>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
                         {tests?.map((test) => (
                             <div key={test.id} className="card test-card" style={{ padding: '1rem' }}>
                                 {/* Title and Subject */}
