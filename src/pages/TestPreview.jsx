@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import MathText from '../components/MathText';
 import { ArrowLeft, Printer, Clock, Calendar, CheckSquare, Square, Circle } from 'lucide-react';
 
 const TestPreview = () => {
@@ -77,7 +78,9 @@ const TestPreview = () => {
                             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                                 <span style={{ fontWeight: 'bold', fontSize: '1.125rem', color: 'var(--color-text-main)' }}>Q{i + 1}.</span>
                                 <div style={{ flex: 1 }}>
-                                    <p style={{ fontSize: '1.125rem', color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>{q.text}</p>
+                                    <p style={{ fontSize: '1.125rem', color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>
+                                        <MathText text={q.text} />
+                                    </p>
                                     {q.image && (
                                         <img src={q.image} alt={`Question ${i + 1}`} style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }} />
                                     )}
@@ -109,7 +112,9 @@ const TestPreview = () => {
                                                 {String.fromCharCode(65 + optIndex)}
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{ color: 'var(--color-text-main)' }}>{opt.text}</span>
+                                                <span style={{ color: 'var(--color-text-main)' }}>
+                                                    <MathText text={opt.text} />
+                                                </span>
                                                 {opt.image && (
                                                     <img src={opt.image} alt={`Option ${optIndex + 1}`} style={{ maxWidth: '150px', maxHeight: '100px', marginTop: '0.5rem', borderRadius: 'var(--radius-sm)' }} />
                                                 )}

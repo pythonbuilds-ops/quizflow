@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import MathText from '../../components/MathText';
 import { Clock, ChevronLeft, ChevronRight, Flag, AlertTriangle, Layout, Maximize } from 'lucide-react';
 
 const TakeTest = () => {

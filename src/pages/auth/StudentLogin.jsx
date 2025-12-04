@@ -24,7 +24,7 @@ const StudentLogin = () => {
             if (isLogin) {
                 await signIn(email, password);
             } else {
-                await signUpStudent(email, password, fullName, teacherCode);
+                await signUpStudent(email, password, fullName, teacherCode.trim());
             }
             navigate('/student/dashboard');
         } catch (err) {

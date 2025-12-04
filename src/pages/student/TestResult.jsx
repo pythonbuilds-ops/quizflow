@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import MathText from '../../components/MathText';
 import { Trophy, Clock, CheckCircle, XCircle, Home, Award, TrendingUp, BarChart2 } from 'lucide-react';
 
 const TestResult = () => {
@@ -236,7 +237,9 @@ const TestResult = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {toughestQuestions.map(q => (
                             <div key={q.id} style={{ padding: '0.75rem', backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.875rem', color: 'var(--color-text-main)' }}>Q{q.index}: {q.text ? q.text.substring(0, 80) : 'Question text missing'}...</span>
+                                <span style={{ fontSize: '0.875rem', color: 'var(--color-text-main)' }}>
+                                    Q{q.index}: <MathText text={q.text} />
+                                </span>
                                 <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-error)' }}>{q.accuracy.toFixed(0)}% got it right</span>
                             </div>
                         ))}

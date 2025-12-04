@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, BarChart2, Download } from 'lucide-react';
+import MathText from '../../components/MathText';
 
 const StudentTestAnalysis = () => {
     const { testId } = useParams();
@@ -283,7 +284,7 @@ const StudentTestAnalysis = () => {
                                         <td style={{ padding: '1rem', fontWeight: 500 }}>{idx + 1}</td>
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ fontSize: '0.9rem', color: 'var(--color-text-main)', marginBottom: '0.25rem', maxHeight: '3rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                                                {q.text}
+                                                <MathText text={q.text} />
                                             </div>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', backgroundColor: 'var(--color-bg)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                                                 {q.type || 'MCQ'}

@@ -12,6 +12,7 @@ import {
     Cell
 } from 'recharts';
 import { Trophy, Users, TrendingUp, ArrowLeft, ChevronDown, ChevronUp, X, CheckCircle, XCircle, Download } from 'lucide-react';
+import MathText from '../components/MathText';
 
 const TestAnalytics = () => {
     const { testId } = useParams();
@@ -239,7 +240,7 @@ const TestAnalytics = () => {
                                         <tr key={q.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                             <td style={{ padding: '0.75rem', fontWeight: 500 }}>{idx + 1}</td>
                                             <td style={{ padding: '0.75rem', fontSize: '0.875rem', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                {q.question}
+                                                <MathText text={q.question} />
                                             </td>
                                             <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
                                                 {studentAnswer || <span style={{ color: 'var(--color-text-muted)' }}>Not Answered</span>}
@@ -472,7 +473,7 @@ const TestAnalytics = () => {
                                                 {item.type || 'MCQ'}
                                             </span>
                                             <span style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>
-                                                {item.text || item.question}
+                                                <MathText text={item.text || item.question} />
                                             </span>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
@@ -499,7 +500,7 @@ const TestAnalytics = () => {
                                         <div style={{ marginBottom: '1.5rem' }}>
                                             <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>Question Text</p>
                                             <div style={{ backgroundColor: 'var(--color-surface)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', color: 'var(--color-text-main)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                                                {item.text || item.question}
+                                                <MathText text={item.text || item.question} />
                                             </div>
                                             {item.image && <img src={item.image} alt="Question" style={{ marginTop: '1rem', maxWidth: '100%', maxHeight: '24rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }} />}
                                         </div>
@@ -524,7 +525,7 @@ const TestAnalytics = () => {
                                                             <div key={idx} style={{ position: 'relative' }}>
                                                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
                                                                     <span style={{ fontWeight: 500, color: isCorrect ? 'var(--color-success)' : 'var(--color-text-main)' }}>
-                                                                        {opt.text} {isCorrect && '(Correct Answer)'}
+                                                                        <MathText text={opt.text} /> {isCorrect && '(Correct Answer)'}
                                                                     </span>
                                                                     <span style={{ color: 'var(--color-text-muted)' }}>{count} students ({percentage.toFixed(1)}%)</span>
                                                                 </div>

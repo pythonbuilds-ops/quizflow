@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, CheckSquare, Square, X, Loader2, AlertTriangle, Terminal } from 'lucide-react';
 import { extractQuestionsWithGemini } from '../utils/geminiExtractor';
+import MathText from './MathText';
 
 const PdfImportModal = ({ isOpen, onClose, onImport }) => {
     const [file, setFile] = useState(null);
@@ -233,11 +234,13 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                                                 />
                                                             </div>
                                                         )}
-                                                        <p style={{ fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>{q.text}</p>
+                                                        <p style={{ fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>
+                                                            <MathText text={q.text} />
+                                                        </p>
                                                         <ul style={{ paddingLeft: '1.25rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                                                             {q.options.map((opt, optIndex) => (
                                                                 <li key={optIndex} style={{ marginBottom: '0.25rem' }}>
-                                                                    {opt.text}
+                                                                    <MathText text={opt.text} />
                                                                 </li>
                                                             ))}
                                                         </ul>

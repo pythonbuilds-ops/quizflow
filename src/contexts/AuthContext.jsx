@@ -172,7 +172,7 @@ export const AuthProvider = ({ children }) => {
         const { data: teacher, error: teacherError } = await supabase
             .from('teachers')
             .select('id')
-            .eq('teacher_code', teacherCode)
+            .eq('teacher_code', teacherCode.trim())
             .single();
 
         if (teacherError || !teacher) {

@@ -73,36 +73,65 @@ export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress
         ]
         `;
 
-        // 3. Call API
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME_ACTUAL}:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            {
-                                inline_data: {
-                                    mime_type: "application/pdf",
-                                    data: base64Data
-                                }
-                            }
-                        ]
-                    }],
-                    generationConfig: {
-                        temperature: 0.1,
-                        response_mime_type: "application/json",
-                        maxOutputTokens: 55000 // Allow large JSON response
-                    }
-                })
-            }
-        );
+        // 3. Call API with Retry Logic
+        const MAX_RETRIES = 5;
+        let response;
+        let lastError;
 
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error?.message || `API Error: ${response.status}`);
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                if (attempt > 1) {
+                    onProgress?.(`Attempt ${attempt}/${MAX_RETRIES}: Retrying Gemini API request...`);
+                } else {
+                    onProgress?.('Sending request to Gemini...');
+                }
+
+                response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME_ACTUAL}:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: prompt },
+                                    {
+                                        inline_data: {
+                                            mime_type: "application/pdf",
+                                            data: base64Data
+                                        }
+                                    }
+                                ]
+                            }],
+                            generationConfig: {
+                                temperature: 0.1,
+                                response_mime_type: "application/json",
+                                maxOutputTokens: 55000 // Allow large JSON response
+                            }
+                        })
+                    }
+                );
+
+                if (response.ok) break; // Success!
+
+                // If not ok, throw to catch block for retry
+                const errData = await response.json();
+                throw new Error(errData.error?.message || `API Error: ${response.status}`);
+
+            } catch (error) {
+                lastError = error;
+                console.warn(`Attempt ${attempt} failed:`, error);
+
+                if (attempt < MAX_RETRIES) {
+                    const delay = 2000 * attempt; // 2s, 4s, 6s, 8s
+                    onProgress?.(`Attempt ${attempt} failed. Retrying in ${delay / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        if (!response || !response.ok) {
+            throw lastError || new Error('Failed to connect to Gemini API after multiple attempts.');
         }
 
         onProgress?.('Analysis complete. Parsing JSON...');
