@@ -188,6 +188,10 @@ const TakeTest = () => {
         setAnswers(prev => ({ ...prev, [questionId]: value }));
     };
 
+    const [showPalette, setShowPalette] = useState(false);
+
+    // ... (existing code)
+
     const calculateScore = () => {
         let score = 0;
         const maxScore = test.questions.length * test.marking_scheme.correct;
@@ -195,7 +199,7 @@ const TakeTest = () => {
         test.questions.forEach(q => {
             const studentAns = answers[q.id];
             if (!studentAns) return; // No answer = 0 marks
-            if (!q.correctAnswer) return; // No correct answer set = 0 marks
+            if (q.correctAnswer === undefined || q.correctAnswer === null) return; // No correct answer set
 
             // Handle integer type questions
             if (q.type === 'integer') {
@@ -206,8 +210,9 @@ const TakeTest = () => {
             }
 
             // Handle MCQ (single or multiple correct answers)
-            const correctAnswers = q.correctAnswer.split(',').map(a => a.trim());
-            const studentAnswers = studentAns.split(',').map(a => a.trim());
+            // Ensure correctAnswer is a string before splitting
+            const correctAnswers = String(q.correctAnswer).split(',').map(a => a.trim());
+            const studentAnswers = String(studentAns).split(',').map(a => a.trim());
 
             // Count correct and wrong selections
             const correctSelected = studentAnswers.filter(ans => correctAnswers.includes(ans));
@@ -226,114 +231,16 @@ const TakeTest = () => {
                 const partialMarks = Math.min(correctSelected.length, 2);
                 score += partialMarks;
             }
-            // If no correct and no wrong (shouldn't happen), give 0
         });
 
         return { score, maxScore };
     };
 
-    const handleSubmit = async (autoSubmit = false) => {
-        if (!autoSubmit) {
-            const unanswered = test.questions.length - Object.keys(answers).length;
-            if (!window.confirm(`You have ${unanswered} unanswered questions. Submit now?`)) return;
-        }
-
-        if (!submissionId) {
-            alert('Error: Submission ID not found. Please refresh the page and try again.');
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            const { score, maxScore } = calculateScore();
-            const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
-            const timeTaken = test.duration * 60 - timeRemaining;
-
-            const { error } = await supabase
-                .from('test_submissions')
-                .update({
-                    answers,
-                    score,
-                    max_score: maxScore,
-                    percentage,
-                    time_taken: timeTaken,
-                    time_per_question: timePerQuestion,
-                    tab_switches: tabSwitches,
-                    submitted_at: new Date().toISOString()
-                })
-                .eq('id', submissionId);
-
-            if (error) throw error;
-
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-
-            navigate(`/student/calculating/${testId}`);
-        } catch (error) {
-            console.error('Submit failed:', error);
-            alert(`Submission failed: ${error.message || 'Unknown error'}. Please check your connection.`);
-            setSubmitting(false);
-        }
-    };
-
-    const sections = useMemo(() => {
-        if (!test) return [];
-        return [...new Set(test.questions.map(q => q.section || 'General'))];
-    }, [test]);
-
-    const currentQuestion = test?.questions[currentQuestionIndex];
-
-    const questionsBySection = useMemo(() => {
-        if (!test) return {};
-        const grouped = {};
-        test.questions.forEach((q, idx) => {
-            const sec = q.section || 'General';
-            if (!grouped[sec]) grouped[sec] = [];
-            grouped[sec].push({ ...q, originalIndex: idx });
-        });
-        return grouped;
-    }, [test]);
-
-    if (loading || !test) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-            <p>Loading test...</p>
-        </div>
-    );
-
-    if (!testStarted) {
-        return (
-            <div ref={containerRef} style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="card" style={{ maxWidth: '600px', textAlign: 'center', padding: '3rem' }}>
-                    <Maximize size={48} style={{ margin: '0 auto 1.5rem', color: 'var(--color-primary)' }} />
-                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>{test.title}</h1>
-                    <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>{test.subject}</p>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem', padding: '1.5rem', backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-lg)' }}>
-                        <div>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Duration</p>
-                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{test.duration} mins</p>
-                        </div>
-                        <div>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Questions</p>
-                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{test.questions.length}</p>
-                        </div>
-                    </div>
-
-                    <div style={{ backgroundColor: '#fef3c7', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem', fontSize: '0.875rem', color: '#92400e' }}>
-                        <strong>Important:</strong> The test will open in fullscreen mode. Exiting fullscreen or switching tabs will be recorded.
-                    </div>
-
-                    <button onClick={handleStartTest} className="btn btn-primary" style={{ fontSize: '1.125rem', padding: '1rem 2rem' }}>
-                        I'm Ready - Start Test
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // ... (handleSubmit and other functions)
 
     return (
         <div ref={containerRef} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            {/* ... (Warning and Pause modals remain same) ... */}
             {showWarning && (
                 <div style={{ position: 'fixed', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fee2e2', color: '#dc2626', padding: '1rem 2rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <AlertTriangle size={20} />
@@ -374,36 +281,65 @@ const TakeTest = () => {
             <header style={{
                 backgroundColor: 'var(--color-surface)',
                 borderBottom: '1px solid var(--color-border)',
-                padding: '1rem 1.5rem',
+                padding: '0.75rem 1rem',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                boxShadow: 'var(--shadow-sm)'
+                boxShadow: 'var(--shadow-sm)',
+                position: 'sticky', top: 0, zIndex: 50
             }}>
-                <div>
-                    <h1 style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>{test.title}</h1>
-                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                        <span>{currentQuestion?.section || 'General'}</span>
-                        <span>Q {currentQuestionIndex + 1}/{test.questions.length}</span>
-                        <span>Switches: {tabSwitches}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button
+                        className="btn btn-outline md:hidden"
+                        onClick={() => setShowPalette(!showPalette)}
+                        style={{ padding: '0.5rem' }}
+                    >
+                        <Layout size={20} />
+                    </button>
+                    <div>
+                        <h1 style={{ fontSize: '1rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{test.title}</h1>
+                        <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                            <span className="hidden md:inline">{currentQuestion?.section || 'General'}</span>
+                            <span>Q {currentQuestionIndex + 1}/{test.questions.length}</span>
+                        </div>
                     </div>
                 </div>
 
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
+                    padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-full)',
                     backgroundColor: timeRemaining < 300 ? '#fef2f2' : '#eff6ff',
                     color: timeRemaining < 300 ? '#dc2626' : '#2563eb',
-                    fontWeight: 'bold', fontFamily: 'monospace', fontSize: '1rem'
+                    fontWeight: 'bold', fontFamily: 'monospace', fontSize: '0.9rem'
                 }}>
-                    <Clock size={18} />
+                    <Clock size={16} />
                     {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
                 </div>
             </header>
 
+            <div className="test-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, gap: '1.5rem', padding: '1rem', maxWidth: '1400px', margin: '0 auto', width: '100%', position: 'relative' }}>
+                <style>{`
+                    @media (min-width: 768px) {
+                        .test-layout { flex-direction: row !important; padding: 1.5rem !important; }
+                        .question-palette { display: block !important; width: 280px !important; position: static !important; height: auto !important; }
+                        .mobile-palette-overlay { display: none !important; }
+                    }
+                    .question-palette {
+                        display: ${showPalette ? 'block' : 'none'};
+                        position: fixed;
+                        top: 60px;
+                        right: 0;
+                        bottom: 0;
+                        width: 280px;
+                        background: var(--color-surface);
+                        z-index: 40;
+                        border-left: 1px solid var(--color-border);
+                        padding: 1rem;
+                        overflow-y: auto;
+                        box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+                    }
+                `}</style>
 
-
-            <div className="test-layout" style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
-                <main className="test-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                <main className="test-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0, paddingBottom: '4rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
                         {sections.map(sec => (
                             <button
                                 key={sec}
@@ -412,15 +348,16 @@ const TakeTest = () => {
                                     if (firstQ !== -1) setCurrentQuestionIndex(firstQ);
                                 }}
                                 style={{
-                                    padding: '0.5rem 1rem',
+                                    padding: '0.4rem 0.8rem',
                                     borderRadius: 'var(--radius-full)',
                                     border: 'none',
                                     backgroundColor: (currentQuestion?.section || 'General') === sec ? 'var(--color-primary)' : 'var(--color-surface)',
                                     color: (currentQuestion?.section || 'General') === sec ? 'white' : 'var(--color-text-muted)',
                                     cursor: 'pointer',
-                                    fontSize: '0.875rem',
+                                    fontSize: '0.8rem',
                                     fontWeight: 500,
-                                    whiteSpace: 'nowrap'
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0
                                 }}
                             >
                                 {sec}
@@ -428,7 +365,8 @@ const TakeTest = () => {
                         ))}
                     </div>
 
-                    <div className="card" style={{ padding: '2rem', flex: 1, overflow: 'auto' }}>
+                    <div className="card" style={{ padding: '1.5rem', flex: 1, overflow: 'auto' }}>
+                        {/* ... (Question content remains same) ... */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                             <span style={{
                                 backgroundColor: 'var(--color-bg)',
@@ -452,26 +390,28 @@ const TakeTest = () => {
                                 }}
                             >
                                 <Flag size={16} fill={markedForReview.has(currentQuestionIndex) ? "currentColor" : "none"} />
-                                {markedForReview.has(currentQuestionIndex) ? 'Marked' : 'Mark'}
+                                <span className="hidden sm:inline">{markedForReview.has(currentQuestionIndex) ? 'Marked' : 'Mark'}</span>
                             </button>
                         </div>
 
                         {currentQuestion?.passage && (
                             <div style={{
                                 backgroundColor: '#f8fafc',
-                                padding: '1.5rem',
+                                padding: '1rem',
                                 borderRadius: 'var(--radius-lg)',
                                 marginBottom: '1.5rem',
                                 borderLeft: '4px solid var(--color-primary)',
-                                fontSize: '0.95rem',
-                                lineHeight: 1.6
+                                fontSize: '0.9rem',
+                                lineHeight: 1.6,
+                                maxHeight: '200px',
+                                overflowY: 'auto'
                             }}>
                                 <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>PASSAGE</h4>
                                 {currentQuestion.passage}
                             </div>
                         )}
 
-                        <div style={{ fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '1.5rem', whiteSpace: 'pre-wrap' }}>
+                        <div style={{ fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.5rem', whiteSpace: 'pre-wrap' }}>
                             {currentQuestion?.text}
                         </div>
 
@@ -493,7 +433,7 @@ const TakeTest = () => {
                                         value={answers[currentQuestion.id] || ''}
                                         onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
                                         placeholder="Enter numerical value..."
-                                        style={{ maxWidth: '300px', fontSize: '1.125rem' }}
+                                        style={{ maxWidth: '100%', fontSize: '1.125rem' }}
                                         step="any"
                                     />
                                 </div>
@@ -506,7 +446,7 @@ const TakeTest = () => {
                                                 key={idx}
                                                 style={{
                                                     display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                                                    padding: '0.875rem', borderRadius: 'var(--radius-lg)',
+                                                    padding: '0.75rem', borderRadius: 'var(--radius-lg)',
                                                     border: isSelected ? '2px solid var(--color-primary)' : '2px solid var(--color-border)',
                                                     backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
                                                     cursor: 'pointer', transition: 'all 0.2s'
@@ -531,7 +471,7 @@ const TakeTest = () => {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '1rem' }}>
                         <button
                             onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                             disabled={currentQuestionIndex === 0}
@@ -561,8 +501,8 @@ const TakeTest = () => {
                     </div>
                 </main>
 
-                <aside className="question-palette" style={{ width: '280px', flexShrink: 0 }}>
-                    <div className="card" style={{ position: 'sticky', top: '1rem', maxHeight: 'calc(100vh - 2rem)', overflow: 'auto' }}>
+                <aside className="question-palette">
+                    <div style={{ height: '100%', overflow: 'auto' }}>
                         <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Layout size={16} /> Question Palette
                         </h3>
@@ -598,7 +538,10 @@ const TakeTest = () => {
                                             return (
                                                 <button
                                                     key={q.id}
-                                                    onClick={() => setCurrentQuestionIndex(idx)}
+                                                    onClick={() => {
+                                                        setCurrentQuestionIndex(idx);
+                                                        setShowPalette(false);
+                                                    }}
                                                     style={{
                                                         width: '100%', aspectRatio: '1',
                                                         borderRadius: 'var(--radius-md)',
@@ -625,6 +568,14 @@ const TakeTest = () => {
                         </div>
                     </div>
                 </aside>
+
+                {showPalette && (
+                    <div
+                        className="mobile-palette-overlay"
+                        onClick={() => setShowPalette(false)}
+                        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 30 }}
+                    />
+                )}
             </div>
         </div>
     );

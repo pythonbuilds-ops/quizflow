@@ -249,12 +249,12 @@ const StudentDashboard = () => {
                 </div>
             </div>
 
-            <div className="container" style={{ padding: '0 1.5rem 3rem', marginTop: '-4rem' }}>
+            <div className="container" style={{ padding: '0 1rem 3rem', marginTop: '-4rem' }}>
                 {/* Stats Grid */}
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                    gap: '1.5rem',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '1rem',
                     marginBottom: '3rem'
                 }}>
                     <StatCard label="Tests Completed" value={stats.attempted} icon={Check} color="#22c55e" />
@@ -279,14 +279,14 @@ const StudentDashboard = () => {
                 )}
 
                 {/* Content Sections */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                     {tests.available.length > 0 && (
                         <section>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                                 <div style={{ width: '4px', height: '24px', backgroundColor: 'var(--color-primary)', borderRadius: '2px' }}></div>
                                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Available Now</h2>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                                 {tests.available?.map(t => <TestCard key={t.id} test={t} type="available" />)}
                             </div>
                         </section>
@@ -294,11 +294,11 @@ const StudentDashboard = () => {
 
                     {tests.upcoming.length > 0 && (
                         <section>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                                 <div style={{ width: '4px', height: '24px', backgroundColor: 'var(--color-text-muted)', borderRadius: '2px' }}></div>
                                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Upcoming</h2>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                                 {tests.upcoming?.map(t => <TestCard key={t.id} test={t} type="upcoming" />)}
                             </div>
                         </section>
@@ -306,11 +306,11 @@ const StudentDashboard = () => {
 
                     {tests.completed.length > 0 && (
                         <section>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                                 <div style={{ width: '4px', height: '24px', backgroundColor: '#22c55e', borderRadius: '2px' }}></div>
                                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>History</h2>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                                 {tests.completed?.map(t => <TestCard key={t.id} test={t} type="completed" />)}
                             </div>
                         </section>
