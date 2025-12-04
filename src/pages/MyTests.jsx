@@ -134,7 +134,7 @@ const MyTests = () => {
                                 {/* Info Grid - Mobile Responsive */}
                                 <div style={{
                                     display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 150px))',
                                     gap: '0.75rem',
                                     fontSize: '0.875rem',
                                     color: 'var(--color-text-muted)',

@@ -33,9 +33,14 @@ const TestResult = () => {
                 .select('*')
                 .eq('test_id', testId)
                 .eq('student_id', user.id)
-                .single();
+                .maybeSingle();
 
-            if (submissionError) throw submissionError;
+            if (submissionError && submissionError.code !== 'PGRST116') throw submissionError;
+            if (!submissionData) {
+                alert('No submission found for this test.');
+                navigate('/student/dashboard');
+                return;
+            }
 
             // Fetch all submissions for leaderboard and percentile
             const { data: allSubmissionsData } = await supabase
@@ -95,7 +100,14 @@ const TestResult = () => {
         );
     }
 
-    if (!test || !submission) return null;
+    if (!test || !submission) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--color-bg)', flexDirection: 'column', gap: '1rem' }}>
+                <p style={{ color: 'var(--color-text-muted)' }}>No result found.</p>
+                <button className="btn btn-primary" onClick={() => navigate('/student/dashboard')}>Go to Dashboard</button>
+            </div>
+        );
+    }
 
     const correctAnswers = test.questions.filter(q => checkAnswer(q, submission.answers[q.id])).length;
     const incorrectAnswers = Object.keys(submission.answers).length - correctAnswers;
