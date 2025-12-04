@@ -238,13 +238,18 @@ const TakeTest = () => {
             if (!window.confirm(`You have ${unanswered} unanswered questions. Submit now?`)) return;
         }
 
+        if (!submissionId) {
+            alert('Error: Submission ID not found. Please refresh the page and try again.');
+            return;
+        }
+
         setSubmitting(true);
         try {
             const { score, maxScore } = calculateScore();
             const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
             const timeTaken = test.duration * 60 - timeRemaining;
 
-            await supabase
+            const { error } = await supabase
                 .from('test_submissions')
                 .update({
                     answers,
@@ -258,6 +263,8 @@ const TakeTest = () => {
                 })
                 .eq('id', submissionId);
 
+            if (error) throw error;
+
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
@@ -265,7 +272,7 @@ const TakeTest = () => {
             navigate(`/student/calculating/${testId}`);
         } catch (error) {
             console.error('Submit failed:', error);
-            alert('Submission failed. Please check your connection.');
+            alert(`Submission failed: ${error.message || 'Unknown error'}. Please check your connection.`);
             setSubmitting(false);
         }
     };
@@ -345,7 +352,7 @@ const TakeTest = () => {
                         <p style={{ fontSize: '0.875rem', color: 'var(--color-error)', marginBottom: '1rem' }}>
                             Tab switches: {tabSwitches} • Timer will resume after 5 minutes
                         </p>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontStyle: 'italic', marginBottom: '2rem', padding: '0.75rem', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderRadius: 'var(--radius-md)', border: '1px dashed #f59e0b' }}>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '2rem', padding: '0.75rem', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderRadius: 'var(--radius-md)', border: '1px dashed #f59e0b' }}>
                             Itni mehnat se code kiya hai aisa naa karo 🥺💔<br />
                             (Imma snitch about this to the teacher tho)
                         </p>
