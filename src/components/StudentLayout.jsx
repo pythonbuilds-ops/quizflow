@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, User, GraduationCap, Menu, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, User, GraduationCap, Menu, X, Settings, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 const StudentLayout = ({ children }) => {
     const { user, signOut } = useAuth();
-    const { theme } = useTheme();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -20,6 +20,7 @@ const StudentLayout = ({ children }) => {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/student/dashboard' },
+        { icon: Settings, label: 'Settings', path: '/settings' },
     ];
 
     return (
@@ -42,6 +43,7 @@ const StudentLayout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+                {/* Header */}
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <div style={{
@@ -58,12 +60,16 @@ const StudentLayout = ({ children }) => {
                         }}>
                             <GraduationCap size={24} />
                         </div>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#a855f7' }}>Student Portal</h2>
+                        <div>
+                            <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#a855f7', margin: 0 }}>QuizFlow</h2>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>Student</p>
+                        </div>
                     </div>
                 </div>
 
+                {/* Navigation */}
                 <nav style={{ flex: 1, padding: '1rem' }}>
-                    <ul style={{ listStyle: 'none' }}>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {navItems.map((item) => (
                             <li key={item.path} style={{ marginBottom: '0.5rem' }}>
                                 <NavLink
@@ -89,7 +95,33 @@ const StudentLayout = ({ children }) => {
                     </ul>
                 </nav>
 
+                {/* Theme Toggle & Logout */}
                 <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)' }}>
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            width: '100%',
+                            padding: '0.75rem 1rem',
+                            marginBottom: '0.5rem',
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--color-text-main)',
+                            cursor: 'pointer',
+                            borderRadius: 'var(--radius-md)',
+                            transition: 'background 0.2s',
+                            fontSize: '0.875rem'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                        {theme === 'dark' ? <Sun size={20} style={{ marginRight: '0.75rem' }} /> : <Moon size={20} style={{ marginRight: '0.75rem' }} />}
+                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+
+                    {/* Logout */}
                     <button
                         onClick={handleLogout}
                         style={{
@@ -102,7 +134,8 @@ const StudentLayout = ({ children }) => {
                             color: 'var(--color-error)',
                             cursor: 'pointer',
                             borderRadius: 'var(--radius-md)',
-                            transition: 'background 0.2s'
+                            transition: 'background 0.2s',
+                            fontSize: '0.875rem'
                         }}
                         onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
                         onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
@@ -123,8 +156,8 @@ const StudentLayout = ({ children }) => {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ textAlign: 'right' }} className="hidden md:block">
-                            <p style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{user?.email?.split('@')[0]}</p>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Student</p>
+                            <p style={{ fontWeight: 600, color: 'var(--color-text-main)', margin: 0, fontSize: '0.875rem' }}>{user?.email?.split('@')[0]}</p>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>Student</p>
                         </div>
                         <div style={{
                             width: '40px',
@@ -148,4 +181,3 @@ const StudentLayout = ({ children }) => {
 };
 
 export default StudentLayout;
-
