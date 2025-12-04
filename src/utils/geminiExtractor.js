@@ -10,8 +10,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
  * @param {string} apiKey - Your Google Gemini API Key.
  * @param {function} onProgress - Callback for status updates.
  */
-export const extractQuestionsWithGemini = async (file, apiKey, onProgress) => {
-    if (!apiKey) throw new Error('Gemini API key is required');
+export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress) => {
+    const apiKey = 'AIzaSyA9oBYqDPnlT2pa9NFCvhOkqUZLuuiz-O0';
+    // if (!apiKey) throw new Error('Gemini API key is required'); // Key is now hardcoded
 
     // Use gemini-1.5-pro for high reasoning and large context (2M tokens)
     // Note: "gemini-2.5-pro" does not exist yet. 1.5 Pro is the SOTA for this task.

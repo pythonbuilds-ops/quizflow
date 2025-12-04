@@ -51,70 +51,37 @@ const Settings = () => {
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Gemini API Key</label>
-                    <input
-                        type="password"
-                        className="input"
-                        value={geminiApiKey}
-                        onChange={(e) => setGeminiApiKey(e.target.value)}
-                        placeholder="AIza..."
-                    />
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-                        Your API key is stored locally in your browser only
-                    </p>
-                </div>
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <a
-                        href="https://aistudio.google.com/app/apikey"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                            fontSize: '0.875rem',
-                            color: 'var(--color-primary)',
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem'
-                        }}
-                    >
-                        Get your free Gemini API key
-                        <ExternalLink size={14} />
-                    </a>
-                </div>
-
-                <button
-                    className="btn btn-primary"
-                    onClick={handleSave}
-                    style={{ width: '100%' }}
-                >
-                    <Save size={18} />
-                    {saved ? 'Saved!' : 'Save API Key'}
-                </button>
-
-                {saved && (
-                    <p style={{
-                        marginTop: '1rem',
-                        color: 'var(--color-success)',
-                        fontSize: '0.875rem',
-                        textAlign: 'center'
+                    <div style={{
+                        padding: '1rem',
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        borderRadius: 'var(--radius-md)',
+                        color: '#166534',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem'
                     }}>
-                        ✓ API key saved locally (stored in browser)
-                    </p>
-                )}
+                        <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            backgroundColor: '#22c55e',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white'
+                        }}>✓</div>
+                        <div>
+                            <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Gemini API Configured</p>
+                            <p style={{ fontSize: '0.875rem' }}>The Vision API key has been pre-configured by the administrator.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Removed manual key input section */}
             </div>
 
-            <div className="card" style={{ maxWidth: '600px', marginTop: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--color-text-main)' }}>
-                    How to Get Your API Key
-                </h3>
-                <ol style={{ paddingLeft: '1.5rem', color: 'var(--color-text-muted)', fontSize: '0.875rem', lineHeight: '1.8' }}>
-                    <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>Google AI Studio</a></li>
-                    <li>Click "Create API Key"</li>
-                    <li>Copy the key (starts with "AIza...")</li>
-                    <li>Paste it above and save</li>
-                </ol>
-            </div>
+            {/* Instructions removed as key is hardcoded */}
         </div>
     );
 };

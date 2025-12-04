@@ -20,7 +20,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
     if (!isOpen) return null;
 
     const addLog = (msg) => {
-        setLogs(prev => [...prev, `${new Date().toLocaleTimeString()} - ${msg}`]);
+        console.log(`${new Date().toLocaleTimeString()} - ${msg}`);
     };
 
     const handleFileChange = async (e) => {
@@ -33,12 +33,9 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
         }
 
         // Check for API key
-        const geminiApiKey = localStorage.getItem('gemini_api_key');
-        if (!geminiApiKey) {
-            setError('Please configure Gemini API key in Settings first.');
-            addLog('ERROR: No API key found');
-            return;
-        }
+        // API key is now hardcoded in the extractor
+        // const geminiApiKey = localStorage.getItem('gemini_api_key');
+        // if (!geminiApiKey) { ... }
 
         setFile(selectedFile);
         setError('');
@@ -50,7 +47,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
         try {
             addLog('Starting AI-powered extraction...');
 
-            const questions = await extractQuestionsWithGemini(selectedFile, geminiApiKey, addLog);
+            const questions = await extractQuestionsWithGemini(selectedFile, null, addLog);
 
             if (questions.length === 0) {
                 setError('No questions detected. The PDF might not contain standard MCQ format.');
@@ -255,25 +252,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                     </div>
 
                     {/* Right Panel: Logs */}
-                    <div style={{ width: '300px', backgroundColor: '#1e1e1e', color: '#d4d4d4', display: 'flex', flexDirection: 'column', fontSize: '0.75rem' }}>
-                        <div style={{ padding: '0.75rem', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-                            <Terminal size={14} />
-                            Extraction Logs
-                        </div>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem', fontFamily: 'monospace' }}>
-                            {logs.length === 0 ? (
-                                <span style={{ color: '#666' }}>Waiting for file...</span>
-                            ) : (
-                                logs.map((log, i) => (
-                                    <div key={i} style={{ marginBottom: '0.25rem', wordBreak: 'break-all' }}>
-                                        <span style={{ color: '#569cd6' }}>{log.split(' - ')[0]}</span>
-                                        <span style={{ marginLeft: '0.5rem' }}>{log.split(' - ')[1]}</span>
-                                    </div>
-                                ))
-                            )}
-                            <div ref={logsEndRef} />
-                        </div>
-                    </div>
+                    {/* Logs removed as per request, logging to console instead */}
                 </div>
 
                 <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
