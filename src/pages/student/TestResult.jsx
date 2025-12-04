@@ -109,21 +109,23 @@ const TestResult = () => {
         );
     }
 
-    const correctAnswers = test.questions.filter(q => checkAnswer(q, submission.answers[q.id])).length;
-    const incorrectAnswers = Object.keys(submission.answers).length - correctAnswers;
+    const correctAnswers = test.questions?.filter(q => checkAnswer(q, submission.answers?.[q.id])).length || 0;
+    const incorrectAnswers = (Object.keys(submission.answers || {}).length) - correctAnswers;
 
     // Calculate percentile
     const totalSubmissions = allSubmissions.length;
-    const betterThan = allSubmissions.filter(s => s.score < submission.score).length;
+    const betterThan = allSubmissions.filter(s => s.score < (submission.score || 0)).length;
     const percentile = totalSubmissions > 0 ? Math.round((betterThan / totalSubmissions) * 100) : 0;
 
     // Find toughest questions
-    const questionStats = test.questions.map((q, idx) => {
-        const correctCount = allSubmissions.filter(s => checkAnswer(q, s.answers[q.id])).length;
+    const questionStats = test.questions?.map((q, idx) => {
+        const correctCount = allSubmissions.filter(s => checkAnswer(q, s.answers?.[q.id])).length;
         const accuracy = totalSubmissions > 0 ? (correctCount / totalSubmissions) * 100 : 0;
         return { ...q, index: idx + 1, accuracy };
-    });
+    }) || [];
     const toughestQuestions = [...questionStats].sort((a, b) => a.accuracy - b.accuracy).slice(0, 3);
+
+    const percentage = Number(submission.percentage || 0);
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--color-bg)', padding: '2rem' }}>
@@ -134,7 +136,7 @@ const TestResult = () => {
                         width: '80px',
                         height: '80px',
                         borderRadius: '50%',
-                        background: submission.percentage >= 40 ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'linear-gradient(135deg, #ef4444, #dc2626)',
+                        background: percentage >= 40 ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'linear-gradient(135deg, #ef4444, #dc2626)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -143,15 +145,15 @@ const TestResult = () => {
                         <Trophy size={40} color="white" />
                     </div>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>
-                        {submission.percentage >= 40 ? 'Great Job!' : 'Keep Practicing!'}
+                        {percentage >= 40 ? 'Great Job!' : 'Keep Practicing!'}
                     </h1>
                     <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>{test.title}</p>
 
-                    <div style={{ fontSize: '3rem', fontWeight: 'bold', color: submission.percentage >= 40 ? '#22c55e' : '#ef4444', marginBottom: '0.5rem' }}>
-                        {submission.percentage.toFixed(1)}%
+                    <div style={{ fontSize: '3rem', fontWeight: 'bold', color: percentage >= 40 ? '#22c55e' : '#ef4444', marginBottom: '0.5rem' }}>
+                        {percentage.toFixed(1)}%
                     </div>
                     <p style={{ color: 'var(--color-text-muted)' }}>
-                        {submission.score} / {submission.max_score} marks
+                        {submission.score || 0} / {submission.max_score || 0} marks
                     </p>
                 </div>
 
