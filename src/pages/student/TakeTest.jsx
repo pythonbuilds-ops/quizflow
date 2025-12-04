@@ -190,8 +190,6 @@ const TakeTest = () => {
 
     const [showPalette, setShowPalette] = useState(false);
 
-    // ... (existing code)
-
     const calculateScore = () => {
         let score = 0;
         const maxScore = test.questions.length * test.marking_scheme.correct;
@@ -236,7 +234,105 @@ const TakeTest = () => {
         return { score, maxScore };
     };
 
-    // ... (handleSubmit and other functions)
+    const handleSubmit = async (autoSubmit = false) => {
+        if (!autoSubmit) {
+            const unanswered = test.questions.length - Object.keys(answers).length;
+            if (!window.confirm(`You have ${unanswered} unanswered questions. Submit now?`)) return;
+        }
+
+        if (!submissionId) {
+            alert('Error: Submission ID not found. Please refresh the page and try again.');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const { score, maxScore } = calculateScore();
+            const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
+            const timeTaken = test.duration * 60 - timeRemaining;
+
+            const { error } = await supabase
+                .from('test_submissions')
+                .update({
+                    answers,
+                    score,
+                    max_score: maxScore,
+                    percentage,
+                    time_taken: timeTaken,
+                    time_per_question: timePerQuestion,
+                    tab_switches: tabSwitches,
+                    submitted_at: new Date().toISOString()
+                })
+                .eq('id', submissionId);
+
+            if (error) throw error;
+
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+
+            navigate(`/student/calculating/${testId}`);
+        } catch (error) {
+            console.error('Submit failed:', error);
+            alert(`Submission failed: ${error.message || 'Unknown error'}. Please check your connection.`);
+            setSubmitting(false);
+        }
+    };
+
+    const sections = useMemo(() => {
+        if (!test) return [];
+        return [...new Set(test.questions.map(q => q.section || 'General'))];
+    }, [test]);
+
+    const currentQuestion = test?.questions[currentQuestionIndex];
+
+    const questionsBySection = useMemo(() => {
+        if (!test) return {};
+        const grouped = {};
+        test.questions.forEach((q, idx) => {
+            const sec = q.section || 'General';
+            if (!grouped[sec]) grouped[sec] = [];
+            grouped[sec].push({ ...q, originalIndex: idx });
+        });
+        return grouped;
+    }, [test]);
+
+    if (loading || !test) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+            <p>Loading test...</p>
+        </div>
+    );
+
+    if (!testStarted) {
+        return (
+            <div ref={containerRef} style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="card" style={{ maxWidth: '600px', textAlign: 'center', padding: '3rem' }}>
+                    <Maximize size={48} style={{ margin: '0 auto 1.5rem', color: 'var(--color-primary)' }} />
+                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>{test.title}</h1>
+                    <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>{test.subject}</p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem', padding: '1.5rem', backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-lg)' }}>
+                        <div>
+                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Duration</p>
+                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{test.duration} mins</p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Questions</p>
+                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{test.questions.length}</p>
+                        </div>
+                    </div>
+
+                    <div style={{ backgroundColor: '#fef3c7', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem', fontSize: '0.875rem', color: '#92400e' }}>
+                        <strong>Important:</strong> The test will open in fullscreen mode. Exiting fullscreen or switching tabs will be recorded.
+                    </div>
+
+                    <button onClick={handleStartTest} className="btn btn-primary" style={{ fontSize: '1.125rem', padding: '1rem 2rem' }}>
+                        I'm Ready - Start Test
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div ref={containerRef} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
