@@ -121,6 +121,7 @@ const TakeTest = () => {
 
             setTest(testData);
 
+            // If there's an in-progress submission (not submitted), resume it
             if (existingSubmission && existingSubmission.answers && Object.keys(existingSubmission.answers).length > 0) {
                 setSubmissionId(existingSubmission.id);
                 setAnswers(existingSubmission.answers || {});
@@ -133,33 +134,7 @@ const TakeTest = () => {
                     containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
                 }
             } else {
-                const { data: newSubmission, error: upsertError } = await supabase
-                    .from('test_submissions')
-                    .upsert({
-                        test_id: testId,
-                        student_id: user.id,
-                        answers: {},
-                        score: 0,
-                        max_score: 0,
-                        percentage: 0,
-                        time_taken: 0,
-                        tab_switches: 0,
-                        time_per_question: {},
-                        time_remaining: testData.duration * 60,
-                        last_active_at: new Date().toISOString()
-                    }, {
-                        onConflict: 'test_id,student_id',
-                        ignoreDuplicates: false
-                    })
-                    .select()
-                    .single();
-
-                if (upsertError) {
-                    console.error('Upsert error:', upsertError);
-                    throw upsertError;
-                }
-
-                setSubmissionId(newSubmission.id);
+                // Don't create submission yet - wait for user to click Start Test
                 setTimeRemaining(testData.duration * 60);
             }
         } catch (error) {
@@ -173,6 +148,35 @@ const TakeTest = () => {
 
     const handleStartTest = async () => {
         try {
+            // Create submission record when test actually starts
+            const { data: newSubmission, error: upsertError } = await supabase
+                .from('test_submissions')
+                .upsert({
+                    test_id: testId,
+                    student_id: user.id,
+                    answers: {},
+                    score: 0,
+                    max_score: 0,
+                    percentage: 0,
+                    time_taken: 0,
+                    tab_switches: 0,
+                    time_per_question: {},
+                    time_remaining: test.duration * 60,
+                    last_active_at: new Date().toISOString()
+                }, {
+                    onConflict: 'test_id,student_id',
+                    ignoreDuplicates: false
+                })
+                .select()
+                .single();
+
+            if (upsertError) {
+                console.error('Upsert error:', upsertError);
+                throw upsertError;
+            }
+
+            setSubmissionId(newSubmission.id);
+
             if (containerRef.current) {
                 await containerRef.current.requestFullscreen();
             }
