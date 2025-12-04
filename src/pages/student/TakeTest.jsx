@@ -340,7 +340,7 @@ const TakeTest = () => {
     }
 
     return (
-        <div ref={containerRef} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        <div ref={containerRef} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'auto' }}>
             {/* ... (Warning and Pause modals remain same) ... */}
             {showWarning && (
                 <div style={{ position: 'fixed', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fee2e2', color: '#dc2626', padding: '1rem 2rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -439,7 +439,7 @@ const TakeTest = () => {
                     }
                 `}</style>
 
-                <main className="test-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0, paddingBottom: '4rem' }}>
+                <main className="test-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0, paddingBottom: '4rem', overflow: 'visible' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
                         {sections.map(sec => (
                             <button
@@ -466,7 +466,7 @@ const TakeTest = () => {
                         ))}
                     </div>
 
-                    <div className="card" style={{ padding: '1.5rem', flex: 1, overflow: 'auto' }}>
+                    <div className="card" style={{ padding: '1.5rem', flex: '1 1 auto' }}>
                         {/* ... (Question content remains same) ... */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                             <span style={{
@@ -513,7 +513,7 @@ const TakeTest = () => {
                         )}
 
                         <div style={{ fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.5rem', whiteSpace: 'pre-wrap' }}>
-                            {currentQuestion?.text}
+                            <MathText text={currentQuestion?.text} />
                         </div>
 
                         {currentQuestion?.image && (
@@ -562,7 +562,7 @@ const TakeTest = () => {
                                                 />
                                                 <span style={{ fontSize: '0.95rem' }}>
                                                     <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>{opt.id}.</span>
-                                                    {opt.text}
+                                                    <MathText text={opt.text} />
                                                 </span>
                                             </label>
                                         );
