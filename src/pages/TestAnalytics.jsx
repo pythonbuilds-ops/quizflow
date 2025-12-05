@@ -273,8 +273,10 @@ const TestAnalytics = () => {
                     .analytics-container { padding: 3rem 1.5rem !important; }
                 }
                 .analytics-charts, .analytics-charts * { box-sizing: border-box !important; }
+                /* Fix: Ensure children don't overflow parent width */
+                .card, .analytics-charts > * { max-width: 100% !important; }
             `}</style>
-                <div className="analytics-container" style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+                <div className="analytics-container" style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', padding: '0 0.5rem', boxSizing: 'border-box' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                             <button onClick={() => navigate('/dashboard')} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -340,15 +342,12 @@ const TestAnalytics = () => {
                         .item-analysis-row {
                             flex-direction: column !important;
                             align-items: flex-start !important;
-                            gap: 0.5rem !important;
+                            gap: 0.75rem !important;
                         }
                         .item-analysis-meta {
-                            text-align: left !important;
-                            margin-top: 0.5rem !important;
-                            display: flex !important;
-                            align-items: center !important;
-                            justify-content: space-between !important;
                             width: 100% !important;
+                            justify-content: space-between !important;
+                            margin-top: 0.5rem !important;
                         }
                     }
                 `}</style>
@@ -360,12 +359,19 @@ const TestAnalytics = () => {
                         }
                     }
                     @media (max-width: 767px) {
+                        .analytics-charts {
+                            display: flex !important;
+                            flex-direction: column !important;
+                            width: 100% !important;
+                        }
                         .analytics-charts > * {
-                            max-width: 100vw !important;
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            margin-bottom: 1.5rem;
                         }
                     }
                 `}</style>
-                        <div className="analytics-charts" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+                        <div className="analytics-charts" style={{ width: '100%', overflow: 'hidden' }}>
                             <div className="card" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                                 <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '1.5rem' }}>Score Distribution</h3>
                                 <div style={{ height: '20rem', width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
