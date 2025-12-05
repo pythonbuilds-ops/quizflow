@@ -43,6 +43,11 @@ const StudentDashboard = () => {
 
             if (submissionsError) console.error('Submissions error:', submissionsError);
 
+            console.log('🔍 SUBMISSIONS DEBUG:', {
+                count: submissions?.length || 0,
+                testIds: submissions?.map(s => s.test_id) || []
+            });
+
             // Get ALL tests (including soft-deleted) for completed tests
             // Don't filter by teacher_id here - students should see their history regardless
             const completedTestIds = submissions?.map(s => s.test_id).filter(id => id !== null) || [];
@@ -59,6 +64,11 @@ const StudentDashboard = () => {
                     console.error('Completed tests error:', completedError);
                 } else {
                     completedTestsData = completedTests || [];
+                    console.log('✅ FOUND TESTS:', completedTestsData.length, 'out of', completedTestIds.length, 'submissions');
+                    if (completedTestsData.length === 0 && completedTestIds.length > 0) {
+                        console.error('❌ NO TESTS FOUND! Tests were likely DELETED from database!');
+                        console.log('Missing test IDs:', completedTestIds);
+                    }
                 }
             }
 
