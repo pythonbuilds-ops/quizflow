@@ -218,7 +218,12 @@ const StudentTestAnalysis = () => {
     if (!test || !submission) return null;
 
     return (
-        <div className="container" style={{ padding: '2rem', maxWidth: '1200px' }}>
+        <div className="container" style={{ padding: '1rem', md: { padding: '2rem' }, maxWidth: '1200px' }}>
+            <style>{`
+                @media (min-width: 768px) {
+                    .container { padding: 2rem !important; }
+                }
+            `}</style>
             <button
                 onClick={() => navigate(`/student/result/${testId}`)}
                 style={{

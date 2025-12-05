@@ -319,6 +319,29 @@ const TestAnalytics = () => {
                         .analytics-charts {
                             grid-template-columns: repeat(2, 1fr) !important;
                         }
+                        .item-analysis-row {
+                            flex-direction: row !important;
+                            align-items: center !important;
+                        }
+                        .item-analysis-meta {
+                            text-align: right !important;
+                            margin-top: 0 !important;
+                        }
+                    }
+                    @media (max-width: 767px) {
+                        .item-analysis-row {
+                            flex-direction: column !important;
+                            align-items: flex-start !important;
+                            gap: 0.5rem !important;
+                        }
+                        .item-analysis-meta {
+                            text-align: left !important;
+                            margin-top: 0.5rem !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: space-between !important;
+                            width: 100% !important;
+                        }
                     }
                 `}</style>
                 <div className="analytics-charts" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
@@ -346,8 +369,8 @@ const TestAnalytics = () => {
 
                     <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                         <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '1.5rem' }}>Leaderboard</h3>
-                        <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <div style={{ overflow: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '400px' }}>
                                 <thead>
                                     <tr style={{ borderBottom: '1px solid var(--color-border)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                         <th style={{ padding: '0.75rem 1rem' }}>Rank</th>
@@ -452,38 +475,40 @@ const TestAnalytics = () => {
                                         backgroundColor: 'var(--color-surface)',
                                         cursor: 'pointer',
                                         display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        transition: 'background-color 0.2s'
+                                        transition: 'background-color 0.2s',
+                                        width: '100%'
                                     }}
+                                    className="item-analysis-row"
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, width: '100%' }}>
                                         <span style={{
                                             fontWeight: 'bold',
                                             fontSize: '0.875rem',
                                             padding: '0.25rem 0.5rem',
                                             borderRadius: 'var(--radius-sm)',
                                             backgroundColor: item.accuracy > 70 ? '#ecfdf5' : item.accuracy > 40 ? '#fffbeb' : '#fef2f2',
-                                            color: item.accuracy > 70 ? '#059669' : item.accuracy > 40 ? '#d97706' : '#dc2626'
+                                            color: item.accuracy > 70 ? '#059669' : item.accuracy > 40 ? '#d97706' : '#dc2626',
+                                            flexShrink: 0
                                         }}>
                                             Q{item.questionNumber}
                                         </span>
-                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                             <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                                                 {item.type || 'MCQ'}
                                             </span>
-                                            <span style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>
+                                            <span style={{ color: 'var(--color-text-main)', fontWeight: 500, wordBreak: 'break-word', fontSize: '0.9rem' }}>
                                                 <MathText text={item.text || item.question} />
                                             </span>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accuracy</span>
-                                                <span style={{ fontWeight: 'bold', color: 'var(--color-text-main)' }}>{item.accuracy.toFixed(1)}%</span>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>({item.correctCount}/{totalStudents})</span>
-                                            </div>
-                                            {selectedQuestion === item.id ? <ChevronUp size={20} style={{ color: 'var(--color-text-muted)' }} /> : <ChevronDown size={20} style={{ color: 'var(--color-text-muted)' }} />}
+                                    </div>
+
+                                    <div className="item-analysis-meta" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                                        <div>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accuracy</span>
+                                            <span style={{ fontWeight: 'bold', color: 'var(--color-text-main)' }}>{item.accuracy.toFixed(1)}%</span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>({item.correctCount}/{totalStudents})</span>
                                         </div>
+                                        {selectedQuestion === item.id ? <ChevronUp size={20} style={{ color: 'var(--color-text-muted)' }} /> : <ChevronDown size={20} style={{ color: 'var(--color-text-muted)' }} />}
                                     </div>
                                 </div>
 

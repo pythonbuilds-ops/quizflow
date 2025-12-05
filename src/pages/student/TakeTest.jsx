@@ -442,7 +442,7 @@ const TakeTest = () => {
                             width: 280px !important;
                             max-width: 85vw !important;
                             background: var(--color-surface) !important;
-                            z-index: 40 !important;
+                            z-index: 100 !important; /* Increased z-index */
                             border-left: 1px solid var(--color-border) !important;
                             padding: 1rem !important;
                             overflow-y: auto !important;
@@ -554,7 +554,9 @@ const TakeTest = () => {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     {currentQuestion?.options?.map((opt, idx) => {
                                         // Check if question allows multiple selection
-                                        const isMultiSelect = currentQuestion.correctAnswer?.toString().includes(',');
+                                        // UPDATED LOGIC: Check explicit multiSelect flag OR comma in correctAnswer
+                                        const isMultiSelect = currentQuestion.multiSelect || currentQuestion.correctAnswer?.toString().includes(',') || currentQuestion.type === 'multimcq';
+
                                         const currentAnswers = answers[currentQuestion.id]?.toString().split(',').map(a => a.trim()) || [];
                                         const isSelected = isMultiSelect
                                             ? currentAnswers.includes(opt.id.toString())
@@ -641,7 +643,7 @@ const TakeTest = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             {Object.entries(questionsBySection).map(([sec, qs]) => (
                                 <div key={sec}>
-                                    <h4 style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                                    <h4 style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.25rem' }}>
                                         {sec}
                                     </h4>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem' }}>
