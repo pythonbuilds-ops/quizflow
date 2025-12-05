@@ -37,7 +37,7 @@ const TestPreview = () => {
 
     if (loading || !test) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
                 <div style={{ width: '3rem', height: '3rem', border: '3px solid var(--color-primary)', borderBottomColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
             </div>
@@ -63,7 +63,7 @@ const TestPreview = () => {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f9fafb', overflow: 'hidden', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: 'var(--color-bg)', overflow: 'hidden', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             <style>{`
                 @media (max-width: 1023px) {
                     .mobile-palette-show { transform: translateX(0) !important; }
@@ -76,8 +76,8 @@ const TestPreview = () => {
 
             {/* Header */}
             <header style={{
-                backgroundColor: 'white',
-                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: 'var(--color-surface)',
+                borderBottom: '1px solid var(--color-border)',
                 height: '64px',
                 display: 'flex',
                 alignItems: 'center',
@@ -92,20 +92,20 @@ const TestPreview = () => {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#111827', margin: 0, maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{test.title}</h1>
-                        <p style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, margin: 0 }}>PREVIEW MODE</p>
+                        <h1 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', margin: 0, maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{test.title}</h1>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 600, margin: 0 }}>PREVIEW MODE</p>
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ display: 'none', '@media (min-width: 1024px)': { display: 'flex' }, alignItems: 'center', gap: '1.5rem', padding: '0.5rem 1.5rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }} className="hidden lg:flex">
+                    <div style={{ display: 'none', '@media (min-width: 1024px)': { display: 'flex' }, alignItems: 'center', gap: '1.5rem', padding: '0.5rem 1.5rem', backgroundColor: 'var(--color-bg)', borderRadius: '0.5rem', border: '1px solid var(--color-border)' }} className="hidden lg:flex">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Clock size={16} style={{ color: '#9ca3af' }} />
-                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6b7280' }}>{test.duration} mins</span>
+                            <Clock size={16} style={{ color: 'var(--color-text-muted)' }} />
+                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>{test.duration} mins</span>
                         </div>
-                        <div style={{ width: '1px', height: '1rem', backgroundColor: '#d1d5db' }}></div>
+                        <div style={{ width: '1px', height: '1rem', backgroundColor: 'var(--color-border)' }}></div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6b7280' }}>Total: {test.total_marks || test.questions.length * 4}</span>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>Total: {test.total_marks || test.questions.length * 4}</span>
                         </div>
                     </div>
 
@@ -155,7 +155,7 @@ const TestPreview = () => {
                     <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
                         {sections.map(section => (
                             <div key={section} style={{ marginBottom: '1.5rem' }}>
-                                <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '0.75rem', paddingBottom: '0.25rem', borderBottom: '1px solid #f3f4f6' }}>
+                                <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem', paddingBottom: '0.25rem', borderBottom: '1px solid var(--color-border)' }}>
                                     {section}
                                 </h4>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
@@ -176,8 +176,8 @@ const TestPreview = () => {
                                                 fontSize: '0.875rem',
                                                 fontWeight: 500,
                                                 border: currentQuestionIndex === q.originalIndex ? '2px solid var(--color-primary)' : 'none',
-                                                backgroundColor: currentQuestionIndex === q.originalIndex ? 'var(--color-primary)' : '#f3f4f6',
-                                                color: currentQuestionIndex === q.originalIndex ? 'white' : '#6b7280',
+                                                backgroundColor: currentQuestionIndex === q.originalIndex ? 'var(--color-primary)' : 'var(--color-bg)',
+                                                color: currentQuestionIndex === q.originalIndex ? 'white' : 'var(--color-text-muted)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.2s',
                                                 outline: 'none'
@@ -192,14 +192,14 @@ const TestPreview = () => {
                         ))}
                     </div>
 
-                    <div style={{ padding: '1rem', borderTop: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                    <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <div style={{ width: '0.75rem', height: '0.75rem', backgroundColor: 'var(--color-primary)', borderRadius: '0.25rem' }}></div>
                                 <span>Current</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ width: '0.75rem', height: '0.75rem', backgroundColor: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '0.25rem' }}></div>
+                                <div style={{ width: '0.75rem', height: '0.75rem', backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.25rem' }}></div>
                                 <span>Unseen</span>
                             </div>
                         </div>
@@ -207,10 +207,10 @@ const TestPreview = () => {
                 </aside>
 
                 {/* Main Content */}
-                <main style={{ flex: 1, overflowY: 'auto', backgroundColor: '#f9fafb', padding: '1rem' }}>
+                <main style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--color-bg)', padding: '1rem' }}>
                     <div style={{ maxWidth: '1024px', margin: '0 auto', paddingBottom: '5rem' }}>
                         {/* Progress Bar */}
-                        <div style={{ marginBottom: '1.5rem', backgroundColor: 'white', borderRadius: '9999px', height: '0.5rem', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                        <div style={{ marginBottom: '1.5rem', backgroundColor: 'var(--color-surface)', borderRadius: '9999px', height: '0.5rem', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                             <div
                                 style={{
                                     height: '100%',
@@ -222,20 +222,20 @@ const TestPreview = () => {
                         </div>
 
                         {/* Question Card */}
-                        <div style={{ backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                        <div style={{ backgroundColor: 'var(--color-surface)', borderRadius: '1rem', boxShadow: 'var(--shadow-md)', border: '1px solid var(--color-border)', overflow: 'hidden' }}>
                             {/* Question Header */}
-                            <div style={{ backgroundColor: '#f9fafb', padding: '1rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                            <div style={{ backgroundColor: 'var(--color-bg)', padding: '1rem 1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <span style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                                    <span style={{ backgroundColor: 'rgba(37, 99, 235, 0.1)', color: 'var(--color-primary)', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 'bold' }}>
                                         Question {currentQuestionIndex + 1}
                                     </span>
-                                    <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>/ {test.questions.length}</span>
+                                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>/ {test.questions.length}</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 500, padding: '0.25rem 0.5rem', backgroundColor: '#e5e7eb', borderRadius: '0.25rem', color: '#6b7280', textTransform: 'uppercase' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 500, padding: '0.25rem 0.5rem', backgroundColor: 'var(--color-bg)', borderRadius: '0.25rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', border: '1px solid var(--color-border)' }}>
                                         {currentQuestion.type || 'MCQ'}
                                     </span>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 500, padding: '0.25rem 0.5rem', backgroundColor: '#dcfce7', color: '#16a34a', borderRadius: '0.25rem', textTransform: 'uppercase' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 500, padding: '0.25rem 0.5rem', backgroundColor: 'var(--color-success-bg, #dcfce7)', color: 'var(--color-success, #16a34a)', borderRadius: '0.25rem', textTransform: 'uppercase' }}>
                                         +4 / -1
                                     </span>
                                 </div>
@@ -244,16 +244,16 @@ const TestPreview = () => {
                             <div style={{ padding: '1.5rem' }}>
                                 {/* Passage */}
                                 {currentQuestion.passage && (
-                                    <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: 'rgba(239, 246, 255, 0.5)', borderRadius: '0.75rem', borderLeft: '4px solid #3b82f6' }}>
-                                        <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#3b82f6', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Reading Passage</h4>
-                                        <div style={{ fontSize: '0.875rem', lineHeight: 1.6, color: '#374151' }}>
+                                    <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: 'var(--color-bg)', borderRadius: '0.75rem', borderLeft: '4px solid var(--color-primary)' }}>
+                                        <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Reading Passage</h4>
+                                        <div style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>
                                             {currentQuestion.passage}
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Question Text */}
-                                <div style={{ fontSize: '1.125rem', color: '#111827', lineHeight: 1.6, marginBottom: '2rem' }}>
+                                <div style={{ fontSize: '1.125rem', color: 'var(--color-text-main)', lineHeight: 1.6, marginBottom: '2rem' }}>
                                     <MathText text={currentQuestion.text} />
                                 </div>
 
@@ -271,9 +271,9 @@ const TestPreview = () => {
                                 {/* Options / Answer Area */}
                                 <div style={{ marginTop: '2rem' }}>
                                     {currentQuestion.type === 'integer' ? (
-                                        <div style={{ padding: '1.5rem', backgroundColor: '#dcfce7', border: '1px solid #86efac', borderRadius: '0.75rem' }}>
-                                            <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#16a34a', marginBottom: '0.5rem' }}>Correct Numerical Answer:</h4>
-                                            <p style={{ fontSize: '1.5rem', fontFamily: 'monospace', fontWeight: 'bold', color: '#15803d', margin: 0 }}>{currentQuestion.correctAnswer}</p>
+                                        <div style={{ padding: '1.5rem', backgroundColor: 'var(--color-success-bg, #dcfce7)', border: '1px solid var(--color-success, #16a34a)', borderRadius: '0.75rem' }}>
+                                            <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--color-success, #16a34a)', marginBottom: '0.5rem' }}>Correct Numerical Answer:</h4>
+                                            <p style={{ fontSize: '1.5rem', fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--color-success, #15803d)', margin: 0 }}>{currentQuestion.correctAnswer}</p>
                                         </div>
                                     ) : (
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
@@ -296,8 +296,8 @@ const TestPreview = () => {
                                                                 gap: '1rem',
                                                                 padding: '1rem',
                                                                 borderRadius: '0.75rem',
-                                                                border: isCorrect ? '2px solid #16a34a' : '1px solid #e5e7eb',
-                                                                backgroundColor: isCorrect ? '#dcfce7' : 'white',
+                                                                border: isCorrect ? '2px solid var(--color-success, #16a34a)' : '1px solid var(--color-border)',
+                                                                backgroundColor: isCorrect ? 'var(--color-success-bg, #dcfce7)' : 'var(--color-surface)',
                                                                 opacity: isCorrect ? 1 : 0.7,
                                                                 transition: 'all 0.2s'
                                                             }}
@@ -307,7 +307,7 @@ const TestPreview = () => {
                                                                     position: 'absolute',
                                                                     top: '-12px',
                                                                     right: '-12px',
-                                                                    backgroundColor: '#16a34a',
+                                                                    backgroundColor: 'var(--color-success, #16a34a)',
                                                                     color: 'white',
                                                                     borderRadius: '9999px',
                                                                     padding: '0.25rem',
@@ -336,18 +336,18 @@ const TestPreview = () => {
                                                                 justifyContent: 'center',
                                                                 fontWeight: 'bold',
                                                                 fontSize: '0.875rem',
-                                                                backgroundColor: isCorrect ? '#16a34a' : '#f3f4f6',
-                                                                color: isCorrect ? 'white' : '#6b7280'
+                                                                backgroundColor: isCorrect ? 'var(--color-success, #16a34a)' : 'var(--color-bg)',
+                                                                color: isCorrect ? 'white' : 'var(--color-text-muted)'
                                                             }}>
                                                                 {opt.id}
                                                             </div>
 
                                                             <div style={{ flex: 1, paddingTop: '0.25rem' }}>
-                                                                <div style={{ fontSize: '1rem', color: isCorrect ? '#111827' : '#6b7280', fontWeight: isCorrect ? 500 : 400 }}>
+                                                                <div style={{ fontSize: '1rem', color: isCorrect ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontWeight: isCorrect ? 500 : 400 }}>
                                                                     <MathText text={opt.text} />
                                                                 </div>
                                                                 {opt.image && (
-                                                                    <img src={opt.image} alt="Option" style={{ marginTop: '0.75rem', borderRadius: '0.5rem', maxHeight: '8rem', border: '1px solid #e5e7eb' }} />
+                                                                    <img src={opt.image} alt="Option" style={{ marginTop: '0.75rem', borderRadius: '0.5rem', maxHeight: '8rem', border: '1px solid var(--color-border)' }} />
                                                                 )}
                                                             </div>
                                                         </div>

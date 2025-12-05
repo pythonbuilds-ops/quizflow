@@ -350,10 +350,23 @@ const TestAnalytics = () => {
                         }
                     }
                 `}</style>
-                    <div className="analytics-charts" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', width: '100%', overflowX: 'hidden' }}>
-                        <div className="card" style={{ width: '100%', overflow: 'hidden' }}>
+                    <style>{`
+                    @media (min-width: 768px) {
+                        .analytics-charts {
+                            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                            max-width: 100% !important;
+                        }
+                    }
+                    @media (max-width: 767px) {
+                        .analytics-charts > * {
+                            max-width: 100vw !important;
+                        }
+                    }
+                `}</style>
+                    <div className="analytics-charts" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+                        <div className="card" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                             <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '1.5rem' }}>Score Distribution</h3>
-                            <div style={{ height: '20rem', width: '100%', overflowX: 'auto' }}>
+                            <div style={{ height: '20rem', width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={scoreDistribution}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -373,9 +386,9 @@ const TestAnalytics = () => {
                             </div>
                         </div>
 
-                        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div className="card" style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                             <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '1.5rem' }}>Leaderboard</h3>
-                            <div style={{ overflowX: 'auto', flex: 1, paddingRight: '0.5rem', width: '100%' }}>
+                            <div style={{ overflowX: 'auto', flex: 1, paddingRight: '0.5rem', width: '100%', maxWidth: '100%' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '500px' }}>
                                     <thead>
                                         <tr style={{ borderBottom: '1px solid var(--color-border)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
