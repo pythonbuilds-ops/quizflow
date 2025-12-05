@@ -374,8 +374,8 @@ const TestAnalytics = () => {
                         <div className="analytics-charts" style={{ width: '100%', overflow: 'hidden' }}>
                             <div className="card" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                                 <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '1.5rem' }}>Score Distribution</h3>
-                                <div style={{ height: '20rem', width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
-                                    <ResponsiveContainer width="100%" height="100%">
+                                <div style={{ height: '20rem', width: '100%', minWidth: '100%', maxWidth: '100%', overflowX: 'auto' }}>
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                         <BarChart data={scoreDistribution}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
