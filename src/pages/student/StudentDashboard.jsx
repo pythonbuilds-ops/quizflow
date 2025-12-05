@@ -66,8 +66,23 @@ const StudentDashboard = () => {
                     completedTestsData = completedTests || [];
                     console.log('✅ FOUND TESTS:', completedTestsData.length, 'out of', completedTestIds.length, 'submissions');
                     if (completedTestsData.length === 0 && completedTestIds.length > 0) {
-                        console.error('❌ NO TESTS FOUND! Tests were likely DELETED from database!');
+                        console.error('❌ NO TESTS FOUND! Tests were likely DELETED or BLOCKED by RLS!');
                         console.log('Missing test IDs:', completedTestIds);
+
+                        // CREATE PLACEHOLDERS for blocked/deleted tests
+                        completedTestsData = submissions.map((sub, index) => ({
+                            id: sub.test_id,
+                            title: `Test #${index + 1} (Data Unavailable)`,
+                            subject: 'History',
+                            duration: 0,
+                            total_marks: Math.round(sub.score / sub.percentage * 100) || 100,
+                            start_time: sub.submitted_at,
+                            end_time: sub.submitted_at,
+                            questions: [],
+                            created_at: sub.submitted_at,
+                            isPlaceholder: true
+                        }));
+                        console.log('✨ Created', completedTestsData.length, 'placeholder tests');
                     }
                 }
             }

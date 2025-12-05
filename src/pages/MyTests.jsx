@@ -33,18 +33,21 @@ const MyTests = () => {
     };
 
     const deleteTest = async (id) => {
-        if (window.confirm('Delete this test? Students who attempted it will still see it in their history.')) {
+        if (window.confirm('⚠️ PERMANENTLY DELETE this test and ALL student submissions? This cannot be undone!')) {
             try {
+                // Hard delete - removes test and cascades to delete all submissions
                 const { error } = await supabase
                     .from('tests')
-                    .update({ deleted_at: new Date().toISOString() })
+                    .delete()
                     .eq('id', id);
 
                 if (error) throw error;
+
+                alert('✅ Test and all data permanently deleted.');
                 setTests(tests.filter(t => t.id !== id));
             } catch (error) {
                 console.error('Error deleting test:', error);
-                alert('Failed to delete test. Please try again.');
+                alert('Failed to delete test: ' + error.message);
             }
         }
     };
