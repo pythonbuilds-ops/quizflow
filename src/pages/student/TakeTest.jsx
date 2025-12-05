@@ -391,9 +391,10 @@ const TakeTest = () => {
                     <button
                         className="btn btn-outline md:hidden"
                         onClick={() => setShowPalette(!showPalette)}
-                        style={{ padding: '0.5rem' }}
+                        style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                         <Layout size={20} />
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Question Palette</span>
                     </button>
                     <div>
                         <h1 style={{ fontSize: '1rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{test.title}</h1>
@@ -557,7 +558,10 @@ const TakeTest = () => {
                                         // UPDATED LOGIC: Check explicit multiSelect flag OR comma in correctAnswer
                                         const isMultiSelect = currentQuestion.multiSelect || currentQuestion.correctAnswer?.toString().includes(',') || currentQuestion.type === 'multimcq';
 
-                                        const currentAnswers = answers[currentQuestion.id]?.toString().split(',').map(a => a.trim()) || [];
+                                        // FIX: Properly parse current answers, handling empty strings and filtering out blanks
+                                        const rawAns = answers[currentQuestion.id];
+                                        const currentAnswers = rawAns ? rawAns.toString().split(',').map(a => a.trim()).filter(a => a !== '') : [];
+
                                         const isSelected = isMultiSelect
                                             ? currentAnswers.includes(opt.id.toString())
                                             : answers[currentQuestion.id] === opt.id;
@@ -566,35 +570,66 @@ const TakeTest = () => {
                                             <label
                                                 key={idx}
                                                 style={{
-                                                    display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                                                    padding: '0.75rem', borderRadius: 'var(--radius-lg)',
-                                                    border: isSelected ? '2px solid var(--color-primary)' : '2px solid var(--color-border)',
-                                                    backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
-                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                    display: 'flex', alignItems: 'flex-start', gap: '1rem',
+                                                    padding: '1rem', borderRadius: 'var(--radius-lg)',
+                                                    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                                                    backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.05)' : 'var(--color-surface)',
+                                                    cursor: 'pointer', transition: 'all 0.2s ease',
+                                                    position: 'relative',
+                                                    overflow: 'hidden'
                                                 }}
+                                                className="hover:shadow-sm"
                                             >
-                                                <input
-                                                    type={isMultiSelect ? "checkbox" : "radio"}
-                                                    name={`q-${currentQuestion.id}`}
-                                                    checked={isSelected}
-                                                    onChange={() => {
-                                                        if (isMultiSelect) {
-                                                            // Handle multiple selection
-                                                            const updated = isSelected
-                                                                ? currentAnswers.filter(a => a !== opt.id.toString())
-                                                                : [...currentAnswers, opt.id.toString()];
-                                                            handleAnswerChange(currentQuestion.id, updated.join(','));
-                                                        } else {
-                                                            // Single selection
-                                                            handleAnswerChange(currentQuestion.id, opt.id);
-                                                        }
-                                                    }}
-                                                    style={{ marginTop: '0.25rem', cursor: 'pointer' }}
-                                                />
-                                                <span style={{ fontSize: '0.95rem', flex: 1 }}>
-                                                    <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>{opt.id}.</span>
+                                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                                    <input
+                                                        type={isMultiSelect ? "checkbox" : "radio"}
+                                                        name={`q-${currentQuestion.id}`}
+                                                        checked={isSelected}
+                                                        onChange={() => {
+                                                            if (isMultiSelect) {
+                                                                // Handle multiple selection with sorting and cleanup
+                                                                let updated = isSelected
+                                                                    ? currentAnswers.filter(a => a !== opt.id.toString())
+                                                                    : [...currentAnswers, opt.id.toString()];
+
+                                                                // Sort to ensure "1,2,3" format consistency
+                                                                updated.sort((a, b) => parseInt(a) - parseInt(b));
+
+                                                                handleAnswerChange(currentQuestion.id, updated.join(','));
+                                                            } else {
+                                                                // Single selection
+                                                                handleAnswerChange(currentQuestion.id, opt.id);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            cursor: 'pointer',
+                                                            width: '1.25rem',
+                                                            height: '1.25rem',
+                                                            accentColor: 'var(--color-primary)',
+                                                            opacity: isSelected ? 0 : 1 // Hide input when selected to show custom icon if desired, or keep both. Let's keep input but style around it.
+                                                        }}
+                                                        className={isSelected ? 'opacity-0 absolute' : 'opacity-100'}
+                                                    />
+                                                    {/* Custom Check Icon for Selected State */}
+                                                    {isSelected && (
+                                                        <div style={{
+                                                            position: 'absolute', left: 0, top: 0,
+                                                            width: '1.25rem', height: '1.25rem',
+                                                            backgroundColor: 'var(--color-primary)',
+                                                            borderRadius: isMultiSelect ? '4px' : '50%',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            color: 'white', pointerEvents: 'none'
+                                                        }}>
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <span style={{ fontSize: '1rem', flex: 1, color: isSelected ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontWeight: isSelected ? 500 : 400 }}>
+                                                    <span style={{ fontWeight: 'bold', marginRight: '0.75rem', color: isSelected ? 'var(--color-primary)' : 'inherit' }}>{opt.id}.</span>
                                                     <MathText text={opt.text} />
-                                                    {isMultiSelect && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>(Multiple answers possible)</span>}
                                                 </span>
                                             </label>
                                         );
