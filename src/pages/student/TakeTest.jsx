@@ -420,22 +420,34 @@ const TakeTest = () => {
                 <style>{`
                     @media (min-width: 768px) {
                         .test-layout { flex-direction: row !important; padding: 1.5rem !important; }
-                        .question-palette { display: block !important; width: 280px !important; position: static !important; height: auto !important; }
+                        .question-palette { 
+                            display: block !important; 
+                            width: 280px !important; 
+                            position: static !important; 
+                            height: auto !important;
+                            box-shadow: none !important;
+                            border-left: none !important;
+                            border: 1px solid var(--color-border) !important;
+                            border-radius: var(--radius-lg) !important;
+                        }
                         .mobile-palette-overlay { display: none !important; }
                     }
-                    .question-palette {
-                        display: ${showPalette ? 'block' : 'none'};
-                        position: fixed;
-                        top: 60px;
-                        right: 0;
-                        bottom: 0;
-                        width: 280px;
-                        background: var(--color-surface);
-                        z-index: 40;
-                        border-left: 1px solid var(--color-border);
-                        padding: 1rem;
-                        overflow-y: auto;
-                        box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+                    @media (max-width: 767px) {
+                        .question-palette {
+                            display: ${showPalette ? 'block' : 'none'} !important;
+                            position: fixed !important;
+                            top: 60px !important;
+                            right: 0 !important;
+                            bottom: 0 !important;
+                            width: 280px !important;
+                            max-width: 85vw !important;
+                            background: var(--color-surface) !important;
+                            z-index: 40 !important;
+                            border-left: 1px solid var(--color-border) !important;
+                            padding: 1rem !important;
+                            overflow-y: auto !important;
+                            box-shadow: -4px 0 15px rgba(0,0,0,0.1) !important;
+                        }
                     }
                 `}</style>
 
@@ -541,7 +553,13 @@ const TakeTest = () => {
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     {currentQuestion?.options?.map((opt, idx) => {
-                                        const isSelected = answers[currentQuestion.id] === opt.id;
+                                        // Check if question allows multiple selection
+                                        const isMultiSelect = currentQuestion.correctAnswer?.toString().includes(',');
+                                        const currentAnswers = answers[currentQuestion.id]?.toString().split(',').map(a => a.trim()) || [];
+                                        const isSelected = isMultiSelect
+                                            ? currentAnswers.includes(opt.id.toString())
+                                            : answers[currentQuestion.id] === opt.id;
+
                                         return (
                                             <label
                                                 key={idx}
@@ -554,15 +572,27 @@ const TakeTest = () => {
                                                 }}
                                             >
                                                 <input
-                                                    type="radio"
+                                                    type={isMultiSelect ? "checkbox" : "radio"}
                                                     name={`q-${currentQuestion.id}`}
                                                     checked={isSelected}
-                                                    onChange={() => handleAnswerChange(currentQuestion.id, opt.id)}
-                                                    style={{ marginTop: '0.25rem' }}
+                                                    onChange={() => {
+                                                        if (isMultiSelect) {
+                                                            // Handle multiple selection
+                                                            const updated = isSelected
+                                                                ? currentAnswers.filter(a => a !== opt.id.toString())
+                                                                : [...currentAnswers, opt.id.toString()];
+                                                            handleAnswerChange(currentQuestion.id, updated.join(','));
+                                                        } else {
+                                                            // Single selection
+                                                            handleAnswerChange(currentQuestion.id, opt.id);
+                                                        }
+                                                    }}
+                                                    style={{ marginTop: '0.25rem', cursor: 'pointer' }}
                                                 />
-                                                <span style={{ fontSize: '0.95rem' }}>
+                                                <span style={{ fontSize: '0.95rem', flex: 1 }}>
                                                     <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>{opt.id}.</span>
                                                     <MathText text={opt.text} />
+                                                    {isMultiSelect && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>(Multiple answers possible)</span>}
                                                 </span>
                                             </label>
                                         );
