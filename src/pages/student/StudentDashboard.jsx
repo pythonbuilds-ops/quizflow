@@ -44,6 +44,7 @@ const StudentDashboard = () => {
             if (submissionsError) console.error('Submissions error:', submissionsError);
 
             // Get ALL tests (including soft-deleted) for completed tests
+            // Don't filter by teacher_id here - students should see their history regardless
             const completedTestIds = submissions?.map(s => s.test_id).filter(id => id !== null) || [];
             let completedTestsData = [];
 
@@ -51,8 +52,8 @@ const StudentDashboard = () => {
                 const { data: completedTests, error: completedError } = await supabase
                     .from('tests')
                     .select('*')
-                    .in('id', completedTestIds)
-                    .eq('teacher_id', studentData.teacher_id);
+                    .in('id', completedTestIds);
+                // Removed .eq('teacher_id', studentData.teacher_id) - students should always see their test history
 
                 if (completedError) {
                     console.error('Completed tests error:', completedError);
@@ -80,19 +81,53 @@ const StudentDashboard = () => {
                 }
             });
 
-            categorized.completed = completedTestsData.map(test => {
-                const submission = submissions.find(s => s.test_id === test.id);
-                return {
-                    ...test,
-                    submission: {
-                        score: submission.score,
-                        percentage: submission.percentage,
-                        submitted_at: submission.submitted_at
+            // Map completed tests with their submissions
+            categorized.completed = completedTestsData
+                .map(test => {
+                    const submission = submissions?.find(s => s.test_id === test.id);
+
+                    // If submission not found, log error but still show the test
+                    if (!submission) {
+                        console.warn(`Submission not found for test ${test.id}`);
+                        return null;
                     }
-                };
-            });
+
+                    return {
+                        ...test,
+                        submission: {
+                            score: submission.score ?? 0,
+                            percentage: submission.percentage ?? 0,
+                            submitted_at: submission.submitted_at || new Date().toISOString()
+                        }
+                    };
+                })
+                .filter(Boolean); // Remove null entries
 
             setTests(categorized);
+
+            // Debug logging to track the disappearing tests issue
+            console.log('📊 Dashboard Data Loaded:', {
+                activeTestsCount: activeTests?.length || 0,
+                submissionsCount: submissions?.length || 0,
+                completedTestsCount: completedTestsData?.length || 0,
+                categorized: {
+                    available: categorized.available.length,
+                    upcoming: categorized.upcoming.length,
+                    completed: categorized.completed.length,
+                    expired: categorized.expired.length
+                },
+                studentTeacherId: studentData.teacher_id
+            });
+
+            // Log completed tests details for debugging
+            if (categorized.completed.length > 0) {
+                console.log('✅ Completed tests:', categorized.completed.map(t => ({
+                    title: t.title,
+                    id: t.id,
+                    submitted_at: t.submission?.submitted_at
+                })));
+            }
+
             setStats({
                 attempted: submissions?.length || 0,
                 avgScore: submissions?.length
