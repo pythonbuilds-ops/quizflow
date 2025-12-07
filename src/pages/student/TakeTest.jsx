@@ -207,10 +207,52 @@ const TakeTest = () => {
 
     const handleStartTest = async () => {
         try {
-            // Create submission record when test actually starts
+            // Safety check: Does a submission already exist?
+            const { data: existing, error: checkError } = await supabase
+                .from('test_submissions')
+                .select('*')
+                .eq('test_id', testId)
+                .eq('student_id', user.id)
+                .maybeSingle();
+
+            if (existing) {
+                // RESUME instead of overwrite
+                console.log("Found existing submission during start, resuming...", existing);
+                setSubmissionId(existing.id);
+                setAnswers(existing.answers || {});
+                setTabSwitches(existing.tab_switches || 0);
+                setTimePerQuestion(existing.time_per_question || {});
+
+                // Recalculate time logic (reuse logic from fetchTest ideally, but duplicating for safety here)
+                const lastActive = existing.last_active_at ? new Date(existing.last_active_at).getTime() : Date.now();
+                const now = Date.now();
+                const timeAwaySeconds = Math.floor((now - lastActive) / 1000);
+                const gracePeriodSeconds = 5 * 60;
+
+                let savedTimeRemaining = existing.time_remaining;
+                if (savedTimeRemaining === undefined || savedTimeRemaining === null) {
+                    savedTimeRemaining = test.duration * 60;
+                }
+
+                let adjustedTime = savedTimeRemaining;
+                if (timeAwaySeconds > gracePeriodSeconds) {
+                    adjustedTime = savedTimeRemaining - timeAwaySeconds;
+                }
+
+                setTimeRemaining(Math.max(0, adjustedTime));
+                setTestStarted(true);
+                setTimerPaused(false);
+
+                if (containerRef.current) {
+                    await containerRef.current.requestFullscreen();
+                }
+                return;
+            }
+
+            // Create submission ONLY if it doesn't exist
             const { data: newSubmission, error: upsertError } = await supabase
                 .from('test_submissions')
-                .upsert({
+                .insert({
                     test_id: testId,
                     student_id: user.id,
                     answers: {},
@@ -222,15 +264,12 @@ const TakeTest = () => {
                     time_per_question: {},
                     time_remaining: test.duration * 60,
                     last_active_at: new Date().toISOString()
-                }, {
-                    onConflict: 'test_id,student_id',
-                    ignoreDuplicates: false
                 })
                 .select()
                 .single();
 
             if (upsertError) {
-                console.error('Upsert error:', upsertError);
+                console.error('Insert error:', upsertError);
                 throw upsertError;
             }
 
@@ -242,8 +281,12 @@ const TakeTest = () => {
             setTestStarted(true);
             setTimerPaused(false);
         } catch (err) {
-            console.error('Fullscreen request failed:', err);
-            alert('Please allow fullscreen mode to start the test.');
+            console.error('Start test failed:', err);
+            if (err.message?.includes('fullscreen')) {
+                alert('Please allow fullscreen mode to start the test.');
+            } else {
+                alert('Failed to start test. Please try again.');
+            }
         }
     };
 
