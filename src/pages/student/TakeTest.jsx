@@ -26,6 +26,7 @@ const TakeTest = () => {
     const [timePerQuestion, setTimePerQuestion] = useState({});
     const [submissionId, setSubmissionId] = useState(null);
     const [showWarning, setShowWarning] = useState(false);
+    const [resuming, setResuming] = useState(false);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -60,7 +61,8 @@ const TakeTest = () => {
     }, [testId]);
 
     useEffect(() => {
-        if (timeRemaining > 0 && testStarted && !submitting) {
+        // Don't start timer if we're still resuming state
+        if (timeRemaining > 0 && testStarted && !submitting && !resuming) {
             const timer = setInterval(() => {
                 setTimeRemaining(prev => {
                     if (prev <= 1) {
@@ -92,7 +94,7 @@ const TakeTest = () => {
             }, 1000);
             return () => clearInterval(timer);
         }
-    }, [timeRemaining, testStarted, submitting, timerPaused, pausedAt, currentQuestionIndex, test]);
+    }, [timeRemaining, testStarted, submitting, resuming, timerPaused, pausedAt, currentQuestionIndex, test]);
 
     const stateRef = useRef({ answers, timeRemaining, tabSwitches, timePerQuestion });
 
@@ -183,6 +185,9 @@ const TakeTest = () => {
             setTest(testData);
 
             if (existingSubmission) {
+                // Set resuming flag to prevent timer from starting prematurely
+                setResuming(true);
+
                 setSubmissionId(existingSubmission.id);
                 setAnswers(existingSubmission.answers || {});
                 setTabSwitches(existingSubmission.tab_switches || 0);
@@ -204,16 +209,18 @@ const TakeTest = () => {
                     adjustedTime = savedTimeRemaining - timeAwaySeconds;
                 }
 
-
-                // Set time remaining (use 1 second minimum if expired to trigger timer)
-                // This ensures the timer starts and will submit with fully loaded state
-                const finalTime = adjustedTime <= 0 ? 1 : adjustedTime;
+                // Set time remaining
+                const finalTime = Math.max(1, adjustedTime);
                 setTimeRemaining(finalTime);
                 setTestStarted(true);
 
-                if (containerRef.current) {
-                    containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
-                }
+                // Allow state to settle before starting timer
+                setTimeout(() => {
+                    setResuming(false);
+                    if (containerRef.current) {
+                        containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+                    }
+                }, 100);
             } else {
                 setTimeRemaining(testData.duration * 60);
             }
