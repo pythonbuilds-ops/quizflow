@@ -94,6 +94,45 @@ const TakeTest = () => {
         }
     }, [timeRemaining, testStarted, submitting, timerPaused, pausedAt, currentQuestionIndex, test]);
 
+    const stateRef = useRef({ answers, timeRemaining, tabSwitches, timePerQuestion });
+
+    useEffect(() => {
+        stateRef.current = { answers, timeRemaining, tabSwitches, timePerQuestion };
+    }, [answers, timeRemaining, tabSwitches, timePerQuestion]);
+
+    // Autosave functionality
+    useEffect(() => {
+        if (!testStarted || submitting || !submissionId) return;
+
+        const saveState = async () => {
+            try {
+                const currentState = stateRef.current;
+                await supabase.from('test_submissions').update({
+                    answers: currentState.answers,
+                    time_remaining: currentState.timeRemaining,
+                    tab_switches: currentState.tabSwitches,
+                    time_per_question: currentState.timePerQuestion,
+                    last_active_at: new Date().toISOString()
+                }).eq('id', submissionId);
+            } catch (err) {
+                console.error('Autosave error:', err);
+            }
+        };
+
+        // Save every 5 seconds
+        const interval = setInterval(saveState, 5000);
+
+        // Also save when page is hidden/closed
+        const handleUnload = () => saveState();
+        window.addEventListener('beforeunload', handleUnload);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('beforeunload', handleUnload);
+            saveState(); // Final save on unmount
+        };
+    }, [testStarted, submitting, submissionId]);
+
     const fetchTest = async () => {
         try {
             const { data: testData, error } = await supabase
@@ -122,20 +161,39 @@ const TakeTest = () => {
 
             setTest(testData);
 
-            // If there's an in-progress submission (not submitted), resume it
-            if (existingSubmission && existingSubmission.answers && Object.keys(existingSubmission.answers).length > 0) {
+            if (existingSubmission) {
                 setSubmissionId(existingSubmission.id);
                 setAnswers(existingSubmission.answers || {});
                 setTabSwitches(existingSubmission.tab_switches || 0);
-                setTimeRemaining(existingSubmission.time_remaining || testData.duration * 60);
                 setTimePerQuestion(existingSubmission.time_per_question || {});
-                setTestStarted(true);
 
-                if (containerRef.current) {
-                    containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+                const lastActive = new Date(existingSubmission.last_active_at).getTime();
+                const now = Date.now();
+                const timeAwaySeconds = Math.floor((now - lastActive) / 1000);
+                const gracePeriodSeconds = 5 * 60;
+
+                let savedTimeRemaining = existingSubmission.time_remaining;
+                if (savedTimeRemaining === undefined || savedTimeRemaining === null) {
+                    savedTimeRemaining = testData.duration * 60;
+                }
+
+                let adjustedTime = savedTimeRemaining;
+
+                if (timeAwaySeconds > gracePeriodSeconds) {
+                    adjustedTime = savedTimeRemaining - timeAwaySeconds;
+                }
+
+                if (adjustedTime <= 0) {
+                    setTimeRemaining(0);
+                    setTestStarted(true);
+                } else {
+                    setTimeRemaining(adjustedTime);
+                    setTestStarted(true);
+                    if (containerRef.current) {
+                        containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+                    }
                 }
             } else {
-                // Don't create submission yet - wait for user to click Start Test
                 setTimeRemaining(testData.duration * 60);
             }
         } catch (error) {
@@ -420,16 +478,19 @@ const TakeTest = () => {
             <div className="test-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, gap: '1.5rem', padding: '1rem', maxWidth: '1400px', margin: '0 auto', width: '100%', position: 'relative' }}>
                 <style>{`
                     @media (min-width: 768px) {
-                        .test-layout { flex-direction: row !important; padding: 1.5rem !important; }
+                        .test-layout { flex-direction: row !important; padding: 2rem !important; gap: 2rem !important; }
                         .question-palette { 
                             display: block !important; 
-                            width: 280px !important; 
-                            position: static !important; 
-                            height: auto !important;
-                            box-shadow: none !important;
-                            border-left: none !important;
+                            width: 340px !important; 
+                            min-width: 340px !important;
+                            position: sticky !important; 
+                            top: 5.5rem !important; 
+                            height: calc(100vh - 7rem) !important;
+                            box-shadow: var(--shadow-sm) !important;
                             border: 1px solid var(--color-border) !important;
-                            border-radius: var(--radius-lg) !important;
+                            border-radius: var(--radius-xl) !important;
+                            background-color: var(--color-surface) !important;
+                            overflow: hidden !important;
                         }
                         .mobile-palette-overlay { display: none !important; }
                     }
@@ -443,7 +504,7 @@ const TakeTest = () => {
                             width: 280px !important;
                             max-width: 85vw !important;
                             background: var(--color-surface) !important;
-                            z-index: 100 !important; /* Increased z-index */
+                            z-index: 100 !important;
                             border-left: 1px solid var(--color-border) !important;
                             padding: 1rem !important;
                             overflow-y: auto !important;
@@ -670,18 +731,27 @@ const TakeTest = () => {
                 </main>
 
                 <aside className="question-palette">
-                    <div style={{ height: '100%', overflow: 'auto' }}>
-                        <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Layout size={16} /> Question Palette
-                        </h3>
+                    <div style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text-main)' }}>
+                                <Layout size={18} /> Question Palette
+                            </h3>
+                        </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', flex: 1 }}>
                             {Object.entries(questionsBySection).map(([sec, qs]) => (
                                 <div key={sec}>
-                                    <h4 style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.25rem' }}>
+                                    <h4 style={{
+                                        fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-text-muted)',
+                                        textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.05em',
+                                        display: 'flex', alignItems: 'center', gap: '0.5rem'
+                                    }}>
                                         {sec}
+                                        <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', backgroundColor: 'var(--color-bg)', borderRadius: '1rem', fontWeight: 'normal' }}>
+                                            {qs.length}
+                                        </span>
                                     </h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.75rem' }}>
                                         {qs.map(q => {
                                             const idx = q.originalIndex;
                                             const isAns = answers[q.id] !== undefined;
@@ -691,13 +761,17 @@ const TakeTest = () => {
                                             let bg = 'var(--color-bg)';
                                             let color = 'var(--color-text-muted)';
                                             let border = '1px solid transparent';
+                                            let fontWeight = '500';
 
                                             if (isCurr) {
                                                 border = '2px solid var(--color-primary)';
                                                 color = 'var(--color-primary)';
+                                                fontWeight = '700';
+                                                bg = 'rgba(37, 99, 235, 0.05)';
                                             } else if (isRev) {
                                                 bg = '#f3e8ff';
                                                 color = '#9333ea';
+                                                border = '1px solid #d8b4fe';
                                             } else if (isAns) {
                                                 bg = 'var(--color-success)';
                                                 color = 'white';
@@ -714,13 +788,16 @@ const TakeTest = () => {
                                                         width: '100%', aspectRatio: '1',
                                                         borderRadius: 'var(--radius-md)',
                                                         border, backgroundColor: bg, color,
-                                                        fontSize: '0.75rem', fontWeight: 500,
+                                                        fontSize: '0.875rem', fontWeight,
                                                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        position: 'relative', padding: 0
+                                                        position: 'relative', padding: 0,
+                                                        transition: 'all 0.2s ease',
+                                                        boxShadow: isCurr ? '0 0 0 2px rgba(37, 99, 235, 0.1)' : 'none'
                                                     }}
+                                                    className="hover:shadow-sm"
                                                 >
                                                     {idx + 1}
-                                                    {isRev && <div style={{ position: 'absolute', top: 2, right: 2, width: 5, height: 5, borderRadius: '50%', backgroundColor: '#9333ea' }} />}
+                                                    {isRev && <div style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#9333ea', border: '1px solid white' }} />}
                                                 </button>
                                             );
                                         })}
@@ -729,10 +806,28 @@ const TakeTest = () => {
                             ))}
                         </div>
 
-                        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)', fontSize: '0.7rem', color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--color-success)' }} /> Answered</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#f3e8ff' }} /> Marked</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--color-bg)' }} /> Unanswered</div>
+                        <div style={{
+                            padding: '1.25rem 1.5rem', borderTop: '1px solid var(--color-border)',
+                            backgroundColor: 'var(--color-bg)', marginTop: 'auto'
+                        }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-success)' }} />
+                                    <span>Answered</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#f3e8ff', border: '1px solid #d8b4fe' }} />
+                                    <span>Marked</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-text-muted)' }} />
+                                    <span>Unanswered</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ width: 10, height: 10, borderRadius: '50%', border: '2px solid var(--color-primary)' }} />
+                                    <span>Current</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </aside>
