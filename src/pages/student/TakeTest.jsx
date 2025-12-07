@@ -27,6 +27,7 @@ const TakeTest = () => {
     const [submissionId, setSubmissionId] = useState(null);
     const [showWarning, setShowWarning] = useState(false);
     const [resuming, setResuming] = useState(false);
+    const [timeUp, setTimeUp] = useState(false); // New state for overlay
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -98,10 +99,22 @@ const TakeTest = () => {
 
     // SEPARATE effect for submission (prevents race conditions)
     useEffect(() => {
-        if (timeRemaining === 0 && testStarted && !submitting && !resuming) {
-            handleSubmit(true);
+        if (timeRemaining === 0 && testStarted && !submitting && !resuming && !timeUp) {
+            console.log("⏰ Timer hit 0! Triggering Time Up overlay.");
+            setTimeUp(true);
         }
-    }, [timeRemaining, testStarted, submitting, resuming]);
+    }, [timeRemaining, testStarted, submitting, resuming, timeUp]);
+
+    // Effect to handle actual submission after Time Up warning
+    useEffect(() => {
+        if (timeUp) {
+            const timer = setTimeout(() => {
+                console.log("🚀 Time Up overlay finished. Submitting now.");
+                handleSubmit(true);
+            }, 3000); // Wait 3 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [timeUp]);
 
     const stateRef = useRef({ answers, timeRemaining, tabSwitches, timePerQuestion });
 
@@ -387,6 +400,19 @@ const TakeTest = () => {
     };
 
     const handleSubmit = async (autoSubmit = false) => {
+        console.log("🛑 handleSubmit called!", {
+            autoSubmit,
+            resuming,
+            testStarted,
+            timeRemaining,
+            answersCount: Object.keys(answers).length
+        });
+
+        if (submitting) {
+            console.warn("⚠️ Already submitting, ignoring call.");
+            return;
+        }
+
         if (!autoSubmit) {
             const unanswered = test.questions.length - Object.keys(answers).length;
             if (!window.confirm(`You have ${unanswered} unanswered questions. Submit now?`)) return;
@@ -400,6 +426,8 @@ const TakeTest = () => {
         setSubmitting(true);
         try {
             const { score, maxScore } = calculateScore();
+            console.log("📝 Calculating score:", { score, maxScore, answers });
+
             const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
             const timeTaken = test.duration * 60 - timeRemaining;
 
@@ -756,7 +784,7 @@ const TakeTest = () => {
                                                             width: '1.25rem',
                                                             height: '1.25rem',
                                                             accentColor: 'var(--color-primary)',
-                                                            opacity: isSelected ? 0 : 1 // Hide input when selected to show custom icon if desired, or keep both. Let's keep input but style around it.
+                                                            opacity: isSelected ? 0 : 1
                                                         }}
                                                         className={isSelected ? 'opacity-0 absolute' : 'opacity-100'}
                                                     />
@@ -921,15 +949,17 @@ const TakeTest = () => {
                     </div>
                 </aside>
 
-                {showPalette && (
-                    <div
-                        className="mobile-palette-overlay"
-                        onClick={() => setShowPalette(false)}
-                        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 30 }}
-                    />
-                )}
-            </div>
-        </div>
+                {
+                    showPalette && (
+                        <div
+                            className="mobile-palette-overlay"
+                            onClick={() => setShowPalette(false)}
+                            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 30 }}
+                        />
+                    )
+                }
+            </div >
+        </div >
     );
 };
 
