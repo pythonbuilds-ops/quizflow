@@ -60,41 +60,50 @@ const TakeTest = () => {
         fetchTest();
     }, [testId]);
 
+    // Timer effect with negative guards to prevent premature start
     useEffect(() => {
-        // Don't start timer if we're still resuming state
-        if (timeRemaining > 0 && testStarted && !submitting && !resuming) {
-            const timer = setInterval(() => {
-                setTimeRemaining(prev => {
-                    if (prev <= 1) {
-                        handleSubmit(true);
-                        return 0;
-                    }
+        // Early return if conditions aren't safe for timer
+        if (!testStarted || submitting || resuming || timerPaused || timeRemaining <= 0) return;
 
-                    if (timerPaused && pausedAt) {
-                        const pauseDuration = Math.floor((Date.now() - pausedAt) / 1000);
-                        if (pauseDuration > 300) {
-                            setTimerPaused(false);
-                            setPausedAt(null);
-                            return prev - 1;
-                        }
-                        return prev;
-                    }
+        const timer = setInterval(() => {
+            setTimeRemaining(prev => {
+                if (prev <= 1) {
+                    // Don't call handleSubmit directly - just set time to 0
+                    return 0;
+                }
 
-                    // Track time per question
-                    if (test && test.questions[currentQuestionIndex]) {
-                        const qId = test.questions[currentQuestionIndex].id;
-                        setTimePerQuestion(prevTPQ => ({
-                            ...prevTPQ,
-                            [qId]: (prevTPQ[qId] || 0) + 1
-                        }));
+                if (timerPaused && pausedAt) {
+                    const pauseDuration = Math.floor((Date.now() - pausedAt) / 1000);
+                    if (pauseDuration > 300) {
+                        setTimerPaused(false);
+                        setPausedAt(null);
+                        return prev - 1;
                     }
+                    return prev;
+                }
 
-                    return prev - 1;
-                });
-            }, 1000);
-            return () => clearInterval(timer);
-        }
+                // Track time per question
+                if (test && test.questions[currentQuestionIndex]) {
+                    const qId = test.questions[currentQuestionIndex].id;
+                    setTimePerQuestion(prevTPQ => ({
+                        ...prevTPQ,
+                        [qId]: (prevTPQ[qId] || 0) + 1
+                    }));
+                }
+
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
     }, [timeRemaining, testStarted, submitting, resuming, timerPaused, pausedAt, currentQuestionIndex, test]);
+
+    // Separate effect to handle auto-submit when time expires
+    useEffect(() => {
+        if (timeRemaining === 0 && testStarted && !submitting && !resuming) {
+            handleSubmit(true);
+        }
+    }, [timeRemaining, testStarted, submitting, resuming]);
 
     const stateRef = useRef({ answers, timeRemaining, tabSwitches, timePerQuestion });
 
@@ -185,7 +194,7 @@ const TakeTest = () => {
             setTest(testData);
 
             if (existingSubmission) {
-                // Set resuming flag to prevent timer from starting prematurely
+                // Set resuming flag FIRST to prevent timer from starting
                 setResuming(true);
 
                 setSubmissionId(existingSubmission.id);
@@ -209,18 +218,18 @@ const TakeTest = () => {
                     adjustedTime = savedTimeRemaining - timeAwaySeconds;
                 }
 
-                // Set time remaining
+                // Set time remaining but DON'T start test yet
                 const finalTime = Math.max(1, adjustedTime);
                 setTimeRemaining(finalTime);
-                setTestStarted(true);
 
-                // Allow state to settle before starting timer
+                // Set testStarted AFTER resuming completes (prevents timer from starting prematurely)
                 setTimeout(() => {
                     setResuming(false);
+                    setTestStarted(true);
                     if (containerRef.current) {
                         containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
                     }
-                }, 100);
+                }, 200);
             } else {
                 setTimeRemaining(testData.duration * 60);
             }
