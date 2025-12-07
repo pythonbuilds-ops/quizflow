@@ -133,6 +133,27 @@ const TakeTest = () => {
         };
     }, [testStarted, submitting, submissionId]);
 
+    // IMMEDIATE autosave when answers change (critical fix for reload bug)
+    useEffect(() => {
+        if (!testStarted || submitting || !submissionId || !answers || Object.keys(answers).length === 0) return;
+
+        const saveAnswers = async () => {
+            try {
+                await supabase.from('test_submissions').update({
+                    answers,
+                    time_remaining: timeRemaining,
+                    last_active_at: new Date().toISOString()
+                }).eq('id', submissionId);
+            } catch (err) {
+                console.error('Immediate answer save error:', err);
+            }
+        };
+
+        // Debounce to avoid too many writes (500ms after last answer change)
+        const timeoutId = setTimeout(saveAnswers, 500);
+        return () => clearTimeout(timeoutId);
+    }, [answers, testStarted, submitting, submissionId, timeRemaining]);
+
     const fetchTest = async () => {
         try {
             const { data: testData, error } = await supabase
@@ -184,8 +205,62 @@ const TakeTest = () => {
                 }
 
                 if (adjustedTime <= 0) {
-                    setTimeRemaining(0);
-                    setTestStarted(true);
+                    // Time expired - submit immediately with saved answers
+                    // Don't set testStarted to avoid race condition with timer
+                    console.log('Time expired on resume, submitting with saved answers:', existingSubmission.answers);
+
+                    // Calculate score with the saved answers
+                    const savedAnswers = existingSubmission.answers || {};
+                    let score = 0;
+                    const maxScore = testData.questions.length * (testData.marking_scheme?.correct || 4);
+
+                    testData.questions.forEach(q => {
+                        const studentAns = savedAnswers[q.id];
+                        if (!studentAns) return;
+                        if (q.correctAnswer === undefined || q.correctAnswer === null) return;
+
+                        if (q.type === 'integer') {
+                            const isCorrect = Math.abs(parseFloat(studentAns) - parseFloat(q.correctAnswer)) < 0.01;
+                            if (isCorrect) score += testData.marking_scheme.correct;
+                            else score -= testData.marking_scheme.incorrect;
+                            return;
+                        }
+
+                        const correctAnswers = String(q.correctAnswer).split(',').map(a => a.trim());
+                        const studentAnswers = String(studentAns).split(',').map(a => a.trim());
+                        const correctSelected = studentAnswers.filter(ans => correctAnswers.includes(ans));
+                        const wrongSelected = studentAnswers.filter(ans => !correctAnswers.includes(ans));
+
+                        if (wrongSelected.length > 0) {
+                            score -= testData.marking_scheme.incorrect;
+                        } else if (correctSelected.length === correctAnswers.length) {
+                            score += testData.marking_scheme.correct;
+                        } else if (correctSelected.length > 0) {
+                            const partialMarks = Math.min(correctSelected.length, 2);
+                            score += partialMarks;
+                        }
+                    });
+
+                    const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
+                    const timeTaken = testData.duration * 60;
+
+                    // Submit directly
+                    await supabase
+                        .from('test_submissions')
+                        .update({
+                            answers: savedAnswers,
+                            score,
+                            max_score: maxScore,
+                            percentage,
+                            time_taken: timeTaken,
+                            time_per_question: existingSubmission.time_per_question || {},
+                            tab_switches: existingSubmission.tab_switches || 0,
+                            submitted_at: new Date().toISOString()
+                        })
+                        .eq('id', existingSubmission.id);
+
+                    navigate(`/student/calculating/${testId}`);
+                    return; // Don't continue with normal resume flow
                 } else {
                     setTimeRemaining(adjustedTime);
                     setTestStarted(true);
