@@ -56,21 +56,19 @@ const TakeTest = () => {
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, [testStarted, submitting]);
 
+
     useEffect(() => {
         fetchTest();
     }, [testId]);
 
     // Timer effect with negative guards to prevent premature start
     useEffect(() => {
-        // Early return if conditions aren't safe for timer
+        // STRICT GUARD: Timer only runs when test is active, started, not submitting, not resuming, not paused
         if (!testStarted || submitting || resuming || timerPaused || timeRemaining <= 0) return;
 
         const timer = setInterval(() => {
             setTimeRemaining(prev => {
-                if (prev <= 1) {
-                    // Don't call handleSubmit directly - just set time to 0
-                    return 0;
-                }
+                if (prev <= 0) return 0; // Just update time, do NOT submit here
 
                 if (timerPaused && pausedAt) {
                     const pauseDuration = Math.floor((Date.now() - pausedAt) / 1000);
@@ -98,7 +96,7 @@ const TakeTest = () => {
         return () => clearInterval(timer);
     }, [timeRemaining, testStarted, submitting, resuming, timerPaused, pausedAt, currentQuestionIndex, test]);
 
-    // Separate effect to handle auto-submit when time expires
+    // SEPARATE effect for submission (prevents race conditions)
     useEffect(() => {
         if (timeRemaining === 0 && testStarted && !submitting && !resuming) {
             handleSubmit(true);
@@ -255,6 +253,10 @@ const TakeTest = () => {
             if (existing) {
                 // RESUME instead of overwrite
                 console.log("Found existing submission during start, resuming...", existing);
+
+                // Set resuming flag to prevent timer from starting prematurely
+                setResuming(true);
+
                 setSubmissionId(existing.id);
                 setAnswers(existing.answers || {});
                 setTabSwitches(existing.tab_switches || 0);
@@ -276,13 +278,20 @@ const TakeTest = () => {
                     adjustedTime = savedTimeRemaining - timeAwaySeconds;
                 }
 
-                setTimeRemaining(Math.max(0, adjustedTime));
-                setTestStarted(true);
-                setTimerPaused(false);
+                // Set time but delay start
+                const finalTime = Math.max(1, adjustedTime);
+                setTimeRemaining(finalTime);
 
-                if (containerRef.current) {
-                    await containerRef.current.requestFullscreen();
-                }
+                // Allow state to settle before starting timer
+                setTimeout(() => {
+                    setResuming(false);
+                    setTestStarted(true);
+                    setTimerPaused(false);
+                    if (containerRef.current) {
+                        containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+                    }
+                }, 200);
+
                 return;
             }
 
