@@ -4,7 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const apiKey = 'AIzaSyA9oBYqDPnlT2pa9NFCvhOkqUZLuuiz-O0';
 
     const MODEL_NAME_ACTUAL = 'gemini-2.5-pro';
 
