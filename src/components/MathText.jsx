@@ -12,17 +12,19 @@ const MathText = ({ text }) => {
     // \(...\) for inline math
     const parts = text.split(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\$[\s\S]*?\$|\\\(.*?\\\))/g);
 
+    const cleanMath = (str) => str.replace(/–/g, '-');
+
     return (
         <span>
             {parts.map((part, index) => {
                 if (part.startsWith('$$') && part.endsWith('$$')) {
-                    return <BlockMath key={index} math={part.slice(2, -2)} />;
+                    return <BlockMath key={index} math={cleanMath(part.slice(2, -2))} />;
                 } else if (part.startsWith('\\[') && part.endsWith('\\]')) {
-                    return <BlockMath key={index} math={part.slice(2, -2)} />;
+                    return <BlockMath key={index} math={cleanMath(part.slice(2, -2))} />;
                 } else if (part.startsWith('$') && part.endsWith('$')) {
-                    return <InlineMath key={index} math={part.slice(1, -1)} />;
+                    return <InlineMath key={index} math={cleanMath(part.slice(1, -1))} />;
                 } else if (part.startsWith('\\(') && part.endsWith('\\)')) {
-                    return <InlineMath key={index} math={part.slice(2, -2)} />;
+                    return <InlineMath key={index} math={cleanMath(part.slice(2, -2))} />;
                 } else {
                     return <span key={index}>{part}</span>;
                 }
