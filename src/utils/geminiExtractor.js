@@ -3,12 +3,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-
 export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress) => {
-    // Use environment variable or fallback to hardcoded
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyA9oBYqDPnlT2pa9NFCvhOkqUZLuuiz-O0';
-
-    const MODEL_NAME = 'gemini-2.5-pro';
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
     const MODEL_NAME_ACTUAL = 'gemini-2.5-pro';
 
