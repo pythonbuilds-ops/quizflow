@@ -3,13 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-/**
- * Extracts questions, sections, diagrams, and links answer keys from an entire PDF.
- * Uses Gemini 1.5 Pro with a large context window.
- * * @param {File} file - The PDF file object from the input.
- * @param {string} apiKey - Your Google Gemini API Key.
- * @param {function} onProgress - Callback for status updates.
- */
+
 export const extractQuestionsWithGemini = async (file, apiKey, onProgress) => {
     // Use provided key or fall back to environment variable
     const geminiApiKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
@@ -19,7 +13,7 @@ export const extractQuestionsWithGemini = async (file, apiKey, onProgress) => {
     }
 
     // Using Gemini 2.5 Pro for high reasoning and large context window
-    const MODEL_NAME = 'gemini-2.5-pro';
+    const MODEL_NAME = 'gemini-2.5-flash-lite';
 
     onProgress?.('Preparing PDF for analysis...');
 
