@@ -163,7 +163,63 @@ export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress
         // Map to internal format
         const questions = (Array.isArray(rawQuestions) ? rawQuestions : [rawQuestions]).map((q, idx) => {
             const normalizedType = q.question_type ? q.question_type.toLowerCase() : 'mcq';
-            const isMultiSelect = normalizedType === 'multimcq' || (q.options || []).filter(o => o.is_correct).length > 1;
+
+            // 1. Determine Correct Answer Value (robust check)
+            let coreCorrectVal = q.correct_answer_value;
+            if (coreCorrectVal === undefined || coreCorrectVal === null) coreCorrectVal = q.correct_answer;
+            if (coreCorrectVal === undefined || coreCorrectVal === null) coreCorrectVal = q.answer;
+
+            // Normalize to string list for checking
+            const correctIds = new Set();
+            if (Array.isArray(coreCorrectVal)) {
+                coreCorrectVal.forEach(v => correctIds.add(String(v).trim().toUpperCase()));
+            } else if (typeof coreCorrectVal === 'string') {
+                coreCorrectVal.split(',').forEach(v => correctIds.add(String(v).trim().toUpperCase()));
+            } else if (coreCorrectVal !== undefined && coreCorrectVal !== null) {
+                correctIds.add(String(coreCorrectVal).toUpperCase());
+            }
+
+            // 2. Map Options & Sync isCorrect
+            const mappedOptions = (q.options || []).map((opt, optIdx) => {
+                const rawId = opt.id;
+                const generatedId = String.fromCharCode(65 + optIdx); // A, B, C...
+                const finalId = rawId || generatedId;
+
+                // An option is correct if:
+                // a) explicitly marked is_correct in JSON
+                // b) its ID (raw or generated) matches the extracted correct value
+                const explicitCorrect = opt.is_correct === true || String(opt.is_correct).toLowerCase() === 'true';
+                const implicitCorrect = correctIds.has(String(finalId).toUpperCase()) || (rawId && correctIds.has(String(rawId).toUpperCase()));
+
+                const isCorrect = explicitCorrect || implicitCorrect;
+
+                // Return mapped option
+                return {
+                    id: finalId,
+                    text: opt.text,
+                    isCorrect: isCorrect
+                };
+            });
+
+            // 3. Re-determine isMultiSelect based on actual correct options
+            const correctOptionCount = mappedOptions.filter(o => o.isCorrect).length;
+            const isMultiSelect = normalizedType === 'multimcq' || correctOptionCount > 1;
+
+            // 4. Finalize correctAnswer string (Crucial for Frontend)
+            // If we have mapped options with isCorrect, derive correctAnswer from them to be safe.
+            // Otherwise fallback to the raw coreCorrectVal (for Integer type or unmatched cases).
+            let finalCorrectAnswer = coreCorrectVal;
+
+            if (mappedOptions.length > 0) {
+                const derivedAnswers = mappedOptions.filter(o => o.isCorrect).map(o => o.id);
+                if (derivedAnswers.length > 0) {
+                    finalCorrectAnswer = derivedAnswers.join(', ');
+                }
+            }
+            // For integer type, ensure we keep the raw value
+            if (normalizedType === 'integer' && !finalCorrectAnswer) {
+                finalCorrectAnswer = coreCorrectVal;
+            }
 
             return {
                 id: Date.now() + Math.random() + idx,
@@ -173,12 +229,8 @@ export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress
                 multiSelect: isMultiSelect,
                 text: q.question_text || '',
                 hasDiagram: q.has_diagram || false,
-                options: (q.options || []).map((opt, optIdx) => ({
-                    id: opt.id || String.fromCharCode(65 + optIdx), // A, B, C...
-                    text: opt.text,
-                    isCorrect: opt.is_correct || false
-                })),
-                correctAnswer: q.correct_answer_value,
+                options: mappedOptions,
+                correctAnswer: finalCorrectAnswer, // Syncs with options or raw value
                 explanation: q.explanation || ''
             };
         });
