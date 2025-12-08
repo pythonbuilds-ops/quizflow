@@ -26,8 +26,6 @@ const TakeTest = () => {
     const [timePerQuestion, setTimePerQuestion] = useState({});
     const [submissionId, setSubmissionId] = useState(null);
     const [showWarning, setShowWarning] = useState(false);
-    const [resuming, setResuming] = useState(false);
-    const [timeUp, setTimeUp] = useState(false); // New state for overlay
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -57,124 +55,64 @@ const TakeTest = () => {
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, [testStarted, submitting]);
 
-
     useEffect(() => {
         fetchTest();
     }, [testId]);
 
-    // Timer effect with negative guards to prevent premature start
+    // Timer effect - FIXED: Separated submission logic to prevent race conditions
     useEffect(() => {
-        // STRICT GUARD: Timer only runs when test is active, started, not submitting, not resuming, not paused
-        if (!testStarted || submitting || resuming || timerPaused || timeRemaining <= 0) return;
-
-        const timer = setInterval(() => {
-            setTimeRemaining(prev => {
-                if (prev <= 0) return 0; // Just update time, do NOT submit here
-
-                if (timerPaused && pausedAt) {
-                    const pauseDuration = Math.floor((Date.now() - pausedAt) / 1000);
-                    if (pauseDuration > 300) {
-                        setTimerPaused(false);
-                        setPausedAt(null);
-                        return prev - 1;
+        if (timeRemaining > 0 && testStarted && !submitting && !timerPaused) {
+            const timer = setInterval(() => {
+                setTimeRemaining(prev => {
+                    if (prev <= 1) {
+                        return 0; // Don't submit here, let the separate effect handle it
                     }
-                    return prev;
-                }
 
-                // Track time per question
-                if (test && test.questions[currentQuestionIndex]) {
-                    const qId = test.questions[currentQuestionIndex].id;
-                    setTimePerQuestion(prevTPQ => ({
-                        ...prevTPQ,
-                        [qId]: (prevTPQ[qId] || 0) + 1
-                    }));
-                }
+                    // Track time per question
+                    if (test && test.questions[currentQuestionIndex]) {
+                        const qId = test.questions[currentQuestionIndex].id;
+                        setTimePerQuestion(prevTPQ => ({
+                            ...prevTPQ,
+                            [qId]: (prevTPQ[qId] || 0) + 1
+                        }));
+                    }
 
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [timeRemaining, testStarted, submitting, resuming, timerPaused, pausedAt, currentQuestionIndex, test]);
-
-    // SEPARATE effect for submission (prevents race conditions)
-    useEffect(() => {
-        if (timeRemaining === 0 && testStarted && !submitting && !resuming && !timeUp) {
-            console.log("⏰ Timer hit 0! Triggering Time Up overlay.");
-            setTimeUp(true);
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timer);
         }
-    }, [timeRemaining, testStarted, submitting, resuming, timeUp]);
+    }, [timeRemaining, testStarted, submitting, timerPaused, currentQuestionIndex, test]);
 
-    // Effect to handle actual submission after Time Up warning
+    // FIXED: Separate effect for auto-submit when time runs out
     useEffect(() => {
-        if (timeUp) {
-            const timer = setTimeout(() => {
-                console.log("🚀 Time Up overlay finished. Submitting now.");
-                handleSubmit(true);
-            }, 3000); // Wait 3 seconds
-            return () => clearTimeout(timer);
+        if (timeRemaining === 0 && testStarted && !submitting) {
+            console.log('Time up! Auto-submitting...');
+            handleSubmit(true);
         }
-    }, [timeUp]);
+    }, [timeRemaining, testStarted, submitting]);
 
-    const stateRef = useRef({ answers, timeRemaining, tabSwitches, timePerQuestion });
-
+    // Auto-save answers every 5 seconds
     useEffect(() => {
-        stateRef.current = { answers, timeRemaining, tabSwitches, timePerQuestion };
-    }, [answers, timeRemaining, tabSwitches, timePerQuestion]);
+        if (!testStarted || !submissionId || submitting) return;
 
-    // Autosave functionality
-    useEffect(() => {
-        if (!testStarted || submitting || !submissionId) return;
-
-        const saveState = async () => {
-            try {
-                const currentState = stateRef.current;
-                await supabase.from('test_submissions').update({
-                    answers: currentState.answers,
-                    time_remaining: currentState.timeRemaining,
-                    tab_switches: currentState.tabSwitches,
-                    time_per_question: currentState.timePerQuestion,
-                    last_active_at: new Date().toISOString()
-                }).eq('id', submissionId);
-            } catch (err) {
-                console.error('Autosave error:', err);
-            }
-        };
-
-        // Save every 5 seconds
-        const interval = setInterval(saveState, 5000);
-
-        // Also save when page is hidden/closed
-        const handleUnload = () => saveState();
-        window.addEventListener('beforeunload', handleUnload);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('beforeunload', handleUnload);
-            saveState(); // Final save on unmount
-        };
-    }, [testStarted, submitting, submissionId]);
-
-    // IMMEDIATE autosave when answers change (critical fix for reload bug)
-    useEffect(() => {
-        if (!testStarted || submitting || !submissionId || !answers || Object.keys(answers).length === 0) return;
-
-        const saveAnswers = async () => {
+        const saveInterval = setInterval(async () => {
             try {
                 await supabase.from('test_submissions').update({
                     answers,
-                    time_remaining: stateRef.current.timeRemaining,
+                    time_remaining: timeRemaining,
+                    tab_switches: tabSwitches,
+                    time_per_question: timePerQuestion,
                     last_active_at: new Date().toISOString()
                 }).eq('id', submissionId);
+                console.log('Auto-saved at', new Date().toLocaleTimeString());
             } catch (err) {
-                console.error('Immediate answer save error:', err);
+                console.error('Auto-save failed:', err);
             }
-        };
+        }, 5000);
 
-        // Debounce to avoid too many writes (500ms after last answer change)
-        const timeoutId = setTimeout(saveAnswers, 500);
-        return () => clearTimeout(timeoutId);
-    }, [answers, testStarted, submitting, submissionId]);
+        return () => clearInterval(saveInterval);
+    }, [testStarted, submissionId, submitting, answers, timeRemaining, tabSwitches, timePerQuestion]);
 
     const fetchTest = async () => {
         try {
@@ -204,44 +142,21 @@ const TakeTest = () => {
 
             setTest(testData);
 
+            // FIXED: Resume if submission exists (not just if answers exist)
             if (existingSubmission) {
-                // Set resuming flag FIRST to prevent timer from starting
-                setResuming(true);
-
+                console.log('Resuming existing submission:', existingSubmission);
                 setSubmissionId(existingSubmission.id);
                 setAnswers(existingSubmission.answers || {});
                 setTabSwitches(existingSubmission.tab_switches || 0);
+                setTimeRemaining(existingSubmission.time_remaining || testData.duration * 60);
                 setTimePerQuestion(existingSubmission.time_per_question || {});
+                setTestStarted(true);
 
-                const lastActive = new Date(existingSubmission.last_active_at).getTime();
-                const now = Date.now();
-                const timeAwaySeconds = Math.floor((now - lastActive) / 1000);
-                const gracePeriodSeconds = 5 * 60;
-
-                let savedTimeRemaining = existingSubmission.time_remaining;
-                if (savedTimeRemaining === undefined || savedTimeRemaining === null) {
-                    savedTimeRemaining = testData.duration * 60;
+                if (containerRef.current) {
+                    containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
                 }
-
-                let adjustedTime = savedTimeRemaining;
-
-                if (timeAwaySeconds > gracePeriodSeconds) {
-                    adjustedTime = savedTimeRemaining - timeAwaySeconds;
-                }
-
-                // Set time remaining but DON'T start test yet
-                const finalTime = Math.max(1, adjustedTime);
-                setTimeRemaining(finalTime);
-
-                // Set testStarted AFTER resuming completes (prevents timer from starting prematurely)
-                setTimeout(() => {
-                    setResuming(false);
-                    setTestStarted(true);
-                    if (containerRef.current) {
-                        containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
-                    }
-                }, 200);
             } else {
+                // Don't create submission yet - wait for user to click Start Test
                 setTimeRemaining(testData.duration * 60);
             }
         } catch (error) {
@@ -255,8 +170,8 @@ const TakeTest = () => {
 
     const handleStartTest = async () => {
         try {
-            // Safety check: Does a submission already exist?
-            const { data: existing, error: checkError } = await supabase
+            // FIXED: Check if submission exists first
+            const { data: existing } = await supabase
                 .from('test_submissions')
                 .select('*')
                 .eq('test_id', testId)
@@ -264,75 +179,40 @@ const TakeTest = () => {
                 .maybeSingle();
 
             if (existing) {
-                // RESUME instead of overwrite
-                console.log("Found existing submission during start, resuming...", existing);
-
-                // Set resuming flag to prevent timer from starting prematurely
-                setResuming(true);
-
+                // If submission already exists, just start the test (resume)
+                console.log('Resuming existing submission');
                 setSubmissionId(existing.id);
                 setAnswers(existing.answers || {});
                 setTabSwitches(existing.tab_switches || 0);
+                setTimeRemaining(existing.time_remaining || test.duration * 60);
                 setTimePerQuestion(existing.time_per_question || {});
+            } else {
+                // Create NEW submission only if none exists
+                const { data: newSubmission, error: insertError } = await supabase
+                    .from('test_submissions')
+                    .insert({
+                        test_id: testId,
+                        student_id: user.id,
+                        answers: {},
+                        score: 0,
+                        max_score: 0,
+                        percentage: 0,
+                        time_taken: 0,
+                        tab_switches: 0,
+                        time_per_question: {},
+                        time_remaining: test.duration * 60,
+                        last_active_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
 
-                // Recalculate time logic (reuse logic from fetchTest ideally, but duplicating for safety here)
-                const lastActive = existing.last_active_at ? new Date(existing.last_active_at).getTime() : Date.now();
-                const now = Date.now();
-                const timeAwaySeconds = Math.floor((now - lastActive) / 1000);
-                const gracePeriodSeconds = 5 * 60;
-
-                let savedTimeRemaining = existing.time_remaining;
-                if (savedTimeRemaining === undefined || savedTimeRemaining === null) {
-                    savedTimeRemaining = test.duration * 60;
+                if (insertError) {
+                    console.error('Insert error:', insertError);
+                    throw insertError;
                 }
 
-                let adjustedTime = savedTimeRemaining;
-                if (timeAwaySeconds > gracePeriodSeconds) {
-                    adjustedTime = savedTimeRemaining - timeAwaySeconds;
-                }
-
-                // Set time but delay start
-                const finalTime = Math.max(1, adjustedTime);
-                setTimeRemaining(finalTime);
-
-                // Allow state to settle before starting timer
-                setTimeout(() => {
-                    setResuming(false);
-                    setTestStarted(true);
-                    setTimerPaused(false);
-                    if (containerRef.current) {
-                        containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
-                    }
-                }, 200);
-
-                return;
+                setSubmissionId(newSubmission.id);
             }
-
-            // Create submission ONLY if it doesn't exist
-            const { data: newSubmission, error: upsertError } = await supabase
-                .from('test_submissions')
-                .insert({
-                    test_id: testId,
-                    student_id: user.id,
-                    answers: {},
-                    score: 0,
-                    max_score: 0,
-                    percentage: 0,
-                    time_taken: 0,
-                    tab_switches: 0,
-                    time_per_question: {},
-                    time_remaining: test.duration * 60,
-                    last_active_at: new Date().toISOString()
-                })
-                .select()
-                .single();
-
-            if (upsertError) {
-                console.error('Insert error:', upsertError);
-                throw upsertError;
-            }
-
-            setSubmissionId(newSubmission.id);
 
             if (containerRef.current) {
                 await containerRef.current.requestFullscreen();
@@ -400,18 +280,7 @@ const TakeTest = () => {
     };
 
     const handleSubmit = async (autoSubmit = false) => {
-        console.log("🛑 handleSubmit called!", {
-            autoSubmit,
-            resuming,
-            testStarted,
-            timeRemaining,
-            answersCount: Object.keys(answers).length
-        });
-
-        if (submitting) {
-            console.warn("⚠️ Already submitting, ignoring call.");
-            return;
-        }
+        if (submitting) return; // Prevent duplicate submissions
 
         if (!autoSubmit) {
             const unanswered = test.questions.length - Object.keys(answers).length;
@@ -426,10 +295,10 @@ const TakeTest = () => {
         setSubmitting(true);
         try {
             const { score, maxScore } = calculateScore();
-            console.log("📝 Calculating score:", { score, maxScore, answers });
-
             const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
             const timeTaken = test.duration * 60 - timeRemaining;
+
+            console.log('Submitting with:', { score, maxScore, percentage, answersCount: Object.keys(answers).length });
 
             const { error } = await supabase
                 .from('test_submissions')
@@ -516,7 +385,6 @@ const TakeTest = () => {
 
     return (
         <div ref={containerRef} style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'auto' }}>
-            {/* ... (Warning and Pause modals remain same) ... */}
             {showWarning && (
                 <div style={{ position: 'fixed', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fee2e2', color: '#dc2626', padding: '1rem 2rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <AlertTriangle size={20} />
@@ -569,7 +437,7 @@ const TakeTest = () => {
                         style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                         <Layout size={20} />
-                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Question Palette</span>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Palette</span>
                     </button>
                     <div>
                         <h1 style={{ fontSize: '1rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{test.title}</h1>
@@ -595,7 +463,11 @@ const TakeTest = () => {
             <div className="test-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, gap: '1.5rem', padding: '1rem', maxWidth: '1400px', margin: '0 auto', width: '100%', position: 'relative' }}>
                 <style>{`
                     @media (min-width: 768px) {
-                        .test-layout { flex-direction: row !important; padding: 2rem !important; gap: 2rem !important; }
+                        .test-layout { 
+                            flex-direction: row !important; 
+                            padding: 2rem !important; 
+                            gap: 2rem !important; 
+                        }
                         .question-palette { 
                             display: block !important; 
                             width: 340px !important; 
@@ -658,7 +530,6 @@ const TakeTest = () => {
                     </div>
 
                     <div className="card" style={{ padding: '1.5rem', flex: '1 1 auto' }}>
-                        {/* ... (Question content remains same) ... */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                             <span style={{
                                 backgroundColor: 'var(--color-bg)',
@@ -733,10 +604,9 @@ const TakeTest = () => {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     {currentQuestion?.options?.map((opt, idx) => {
                                         // Check if question allows multiple selection
-                                        // UPDATED LOGIC: Check explicit multiSelect flag OR comma in correctAnswer
                                         const isMultiSelect = currentQuestion.multiSelect || currentQuestion.correctAnswer?.toString().includes(',') || currentQuestion.type === 'multimcq';
 
-                                        // FIX: Properly parse current answers, handling empty strings and filtering out blanks
+                                        // Parse current answers
                                         const rawAns = answers[currentQuestion.id];
                                         const currentAnswers = rawAns ? rawAns.toString().split(',').map(a => a.trim()).filter(a => a !== '') : [];
 
@@ -765,48 +635,19 @@ const TakeTest = () => {
                                                         checked={isSelected}
                                                         onChange={() => {
                                                             if (isMultiSelect) {
-                                                                // Handle multiple selection with sorting and cleanup
-                                                                let updated = isSelected
+                                                                const newAnswers = isSelected
                                                                     ? currentAnswers.filter(a => a !== opt.id.toString())
                                                                     : [...currentAnswers, opt.id.toString()];
-
-                                                                // Sort to ensure "1,2,3" format consistency
-                                                                updated.sort((a, b) => parseInt(a) - parseInt(b));
-
-                                                                handleAnswerChange(currentQuestion.id, updated.join(','));
+                                                                handleAnswerChange(currentQuestion.id, newAnswers.join(','));
                                                             } else {
-                                                                // Single selection
                                                                 handleAnswerChange(currentQuestion.id, opt.id);
                                                             }
                                                         }}
-                                                        style={{
-                                                            cursor: 'pointer',
-                                                            width: '1.25rem',
-                                                            height: '1.25rem',
-                                                            accentColor: 'var(--color-primary)',
-                                                            opacity: isSelected ? 0 : 1
-                                                        }}
-                                                        className={isSelected ? 'opacity-0 absolute' : 'opacity-100'}
+                                                        style={{ margin: 0 }}
                                                     />
-                                                    {/* Custom Check Icon for Selected State */}
-                                                    {isSelected && (
-                                                        <div style={{
-                                                            position: 'absolute', left: 0, top: 0,
-                                                            width: '1.25rem', height: '1.25rem',
-                                                            backgroundColor: 'var(--color-primary)',
-                                                            borderRadius: isMultiSelect ? '4px' : '50%',
-                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                            color: 'white', pointerEvents: 'none'
-                                                        }}>
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                                            </svg>
-                                                        </div>
-                                                    )}
                                                 </div>
-
-                                                <span style={{ fontSize: '1rem', flex: 1, color: isSelected ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontWeight: isSelected ? 500 : 400 }}>
-                                                    <span style={{ fontWeight: 'bold', marginRight: '0.75rem', color: isSelected ? 'var(--color-primary)' : 'inherit' }}>{opt.id}.</span>
+                                                <span style={{ flex: 1, fontSize: '0.95rem' }}>
+                                                    <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>{opt.id}.</span>
                                                     <MathText text={opt.text} />
                                                 </span>
                                             </label>
@@ -860,11 +701,14 @@ const TakeTest = () => {
                                 <div key={sec}>
                                     <h4 style={{
                                         fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-text-muted)',
-                                        textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.05em',
-                                        display: 'flex', alignItems: 'center', gap: '0.5rem'
+                                        textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.05em',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                                     }}>
-                                        {sec}
-                                        <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', backgroundColor: 'var(--color-bg)', borderRadius: '1rem', fontWeight: 'normal' }}>
+                                        <span>{sec}</span>
+                                        <span style={{
+                                            backgroundColor: 'var(--color-bg)', padding: '0.125rem 0.5rem',
+                                            borderRadius: 'var(--radius-full)', fontSize: '0.65rem'
+                                        }}>
                                             {qs.length}
                                         </span>
                                     </h4>
@@ -878,12 +722,10 @@ const TakeTest = () => {
                                             let bg = 'var(--color-bg)';
                                             let color = 'var(--color-text-muted)';
                                             let border = '1px solid transparent';
-                                            let fontWeight = '500';
 
                                             if (isCurr) {
                                                 border = '2px solid var(--color-primary)';
                                                 color = 'var(--color-primary)';
-                                                fontWeight = '700';
                                                 bg = 'rgba(37, 99, 235, 0.05)';
                                             } else if (isRev) {
                                                 bg = '#f3e8ff';
@@ -905,10 +747,10 @@ const TakeTest = () => {
                                                         width: '100%', aspectRatio: '1',
                                                         borderRadius: 'var(--radius-md)',
                                                         border, backgroundColor: bg, color,
-                                                        fontSize: '0.875rem', fontWeight,
+                                                        fontSize: '0.875rem', fontWeight: 600,
                                                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                         position: 'relative', padding: 0,
-                                                        transition: 'all 0.2s ease',
+                                                        transition: 'all 0.15s ease',
                                                         boxShadow: isCurr ? '0 0 0 2px rgba(37, 99, 235, 0.1)' : 'none'
                                                     }}
                                                     className="hover:shadow-sm"
@@ -924,42 +766,44 @@ const TakeTest = () => {
                         </div>
 
                         <div style={{
-                            padding: '1.25rem 1.5rem', borderTop: '1px solid var(--color-border)',
-                            backgroundColor: 'var(--color-bg)', marginTop: 'auto'
+                            padding: '1.5rem',
+                            borderTop: '1px solid var(--color-border)',
+                            backgroundColor: 'var(--color-surface)',
+                            fontSize: '0.75rem',
+                            color: 'var(--color-text-muted)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.75rem'
                         }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-success)' }} />
-                                    <span>Answered</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#f3e8ff', border: '1px solid #d8b4fe' }} />
-                                    <span>Marked</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-text-muted)' }} />
-                                    <span>Unanswered</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <div style={{ width: 10, height: 10, borderRadius: '50%', border: '2px solid var(--color-primary)' }} />
-                                    <span>Current</span>
-                                </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-success)' }} />
+                                <span>Answered</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#f3e8ff', border: '1px solid #d8b4fe' }} />
+                                <span>Marked for Review</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--color-bg)' }} />
+                                <span>Not Answered</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'rgba(37, 99, 235, 0.05)', border: '2px solid var(--color-primary)' }} />
+                                <span>Current</span>
                             </div>
                         </div>
                     </div>
                 </aside>
 
-                {
-                    showPalette && (
-                        <div
-                            className="mobile-palette-overlay"
-                            onClick={() => setShowPalette(false)}
-                            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 30 }}
-                        />
-                    )
-                }
-            </div >
-        </div >
+                {showPalette && (
+                    <div
+                        className="mobile-palette-overlay"
+                        onClick={() => setShowPalette(false)}
+                        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 30 }}
+                    />
+                )}
+            </div>
+        </div>
     );
 };
 
