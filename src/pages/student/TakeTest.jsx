@@ -11,13 +11,20 @@ const TakeTest = () => {
     const { user } = useAuth();
     const containerRef = useRef(null);
 
+    // Safety guards to prevent race conditions during reload
+    const timerHasTickedRef = useRef(false);
+    const isMountedRef = useRef(true);
+    const mountTimeRef = useRef(Date.now());
+    const MIN_TIME_BEFORE_SUBMIT = 3000;  // 3 seconds minimum before any auto-submit allowed
+    const GRACE_PERIOD_MS = 5 * 60 * 1000;  // 5 minutes grace period
+
     const [test, setTest] = useState(null);
     const [loading, setLoading] = useState(true);
     const [testStarted, setTestStarted] = useState(false);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [markedForReview, setMarkedForReview] = useState(new Set());
-    const [timeRemaining, setTimeRemaining] = useState(null); // Changed from 0 to null to prevent race condition
+    const [timeRemaining, setTimeRemaining] = useState(null);
     const [timerPaused, setTimerPaused] = useState(false);
     const [pausedAt, setPausedAt] = useState(null);
     const [startTime] = useState(Date.now());
@@ -26,6 +33,15 @@ const TakeTest = () => {
     const [timePerQuestion, setTimePerQuestion] = useState({});
     const [submissionId, setSubmissionId] = useState(null);
     const [showWarning, setShowWarning] = useState(false);
+    const [showResumeModal, setShowResumeModal] = useState(false);  // For grace period resume screen
+    const [resumeInfo, setResumeInfo] = useState(null);  // Info about the paused test
+
+    // Track component mount/unmount for safety
+    useEffect(() => {
+        isMountedRef.current = true;
+        mountTimeRef.current = Date.now();
+        return () => { isMountedRef.current = false; };
+    }, []);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -63,10 +79,13 @@ const TakeTest = () => {
     useEffect(() => {
         if (timeRemaining !== null && timeRemaining > 0 && testStarted && !submitting && !timerPaused) {
             const timer = setInterval(() => {
+                // Mark that timer has ticked at least once - required for safe auto-submit
+                if (!timerHasTickedRef.current) {
+                    timerHasTickedRef.current = true;
+                }
+
                 setTimeRemaining(prev => {
-                    if (prev <= 1) {
-                        return 0;
-                    }
+                    if (prev <= 1) return 0;
 
                     // Track time per question
                     if (test && test.questions[currentQuestionIndex]) {
@@ -84,20 +103,17 @@ const TakeTest = () => {
         }
     }, [timeRemaining, testStarted, submitting, timerPaused, currentQuestionIndex, test]);
 
-    // Auto-submit effect
+    // Auto-submit when time runs out (only if timer has genuinely ticked)
     useEffect(() => {
-        // Strict check: timeRemaining must be exactly 0 (not null)
-        if (timeRemaining === 0 && testStarted && !submitting) {
-            console.log('Time up! Auto-submitting...');
+        if (timeRemaining === 0 && testStarted && !submitting && timerHasTickedRef.current) {
             handleSubmit(true);
         }
     }, [timeRemaining, testStarted, submitting]);
 
-    // Auto-save answers every 5 seconds
+    // Auto-save progress every 30 seconds
     useEffect(() => {
         if (!testStarted || !submissionId || submitting) return;
-        // Don't save if time is null
-        if (timeRemaining === null) return;
+        if (timeRemaining === null || timeRemaining <= 0) return;
 
         const saveInterval = setInterval(async () => {
             try {
@@ -108,11 +124,10 @@ const TakeTest = () => {
                     time_per_question: timePerQuestion,
                     last_active_at: new Date().toISOString()
                 }).eq('id', submissionId);
-                console.log('Auto-saved at', new Date().toLocaleTimeString());
             } catch (err) {
                 console.error('Auto-save failed:', err);
             }
-        }, 5000);
+        }, 30000);  // Save every 30 seconds (instant save handles individual changes)
 
         return () => clearInterval(saveInterval);
     }, [testStarted, submissionId, submitting, answers, timeRemaining, tabSwitches, timePerQuestion]);
@@ -138,6 +153,7 @@ const TakeTest = () => {
                 console.error('Submission query error:', subError);
             }
 
+            // Already submitted - redirect to results
             if (existingSubmission?.submitted_at) {
                 navigate(`/student/result/${testId}`);
                 return;
@@ -146,25 +162,59 @@ const TakeTest = () => {
             setTest(testData);
 
             if (existingSubmission) {
-                console.log('Resuming existing submission:', existingSubmission);
                 setSubmissionId(existingSubmission.id);
                 setAnswers(existingSubmission.answers || {});
                 setTabSwitches(existingSubmission.tab_switches || 0);
+                setTimePerQuestion(existingSubmission.time_per_question || {});
 
-                // CORRUPTION RECOVERY:
-                // If saved time is 0 but confirmed NOT submitted (checked above), reset it.
+                // Calculate time based on grace period
+                const lastActiveAt = existingSubmission.last_active_at ? new Date(existingSubmission.last_active_at) : null;
+                const now = new Date();
+                const timeSinceLastActive = lastActiveAt ? now - lastActiveAt : 0;
                 let savedTime = existingSubmission.time_remaining;
+
+                // Corruption recovery: if time is 0 but not submitted, reset
                 if (savedTime !== null && savedTime <= 0) {
-                    console.warn('Found 0 time for unsubmitted test. Resetting to duration.');
                     savedTime = testData.duration * 60;
                 }
 
-                setTimeRemaining(savedTime !== null ? savedTime : testData.duration * 60);
-                setTimePerQuestion(existingSubmission.time_per_question || {});
-                setTestStarted(true);
+                // Grace period logic
+                if (timeSinceLastActive > 0 && savedTime !== null) {
+                    if (timeSinceLastActive <= GRACE_PERIOD_MS) {
+                        // Within grace period - show resume modal, keep saved time
+                        setResumeInfo({
+                            savedTime,
+                            timeSinceLastActive: Math.floor(timeSinceLastActive / 1000),
+                            withinGracePeriod: true
+                        });
+                        setTimeRemaining(savedTime);
+                        setShowResumeModal(true);
+                    } else {
+                        // Beyond grace period - deduct time that passed after grace period
+                        const timeAfterGrace = Math.floor((timeSinceLastActive - GRACE_PERIOD_MS) / 1000);
+                        const adjustedTime = Math.max(0, savedTime - timeAfterGrace);
 
-                if (containerRef.current) {
-                    containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+                        if (adjustedTime <= 0) {
+                            // Time expired while away - auto submit
+                            setTimeRemaining(0);
+                            setTestStarted(true);
+                        } else {
+                            setResumeInfo({
+                                savedTime: adjustedTime,
+                                timeSinceLastActive: Math.floor(timeSinceLastActive / 1000),
+                                timeDeducted: timeAfterGrace,
+                                withinGracePeriod: false
+                            });
+                            setTimeRemaining(adjustedTime);
+                            setShowResumeModal(true);
+                        }
+                    }
+                } else {
+                    setTimeRemaining(savedTime !== null ? savedTime : testData.duration * 60);
+                    setTestStarted(true);
+                    if (containerRef.current) {
+                        containerRef.current.requestFullscreen().catch(() => { });
+                    }
                 }
             } else {
                 setTimeRemaining(testData.duration * 60);
@@ -188,12 +238,10 @@ const TakeTest = () => {
                 .maybeSingle();
 
             if (existing) {
-                console.log('Resuming existing submission');
                 setSubmissionId(existing.id);
                 setAnswers(existing.answers || {});
                 setTabSwitches(existing.tab_switches || 0);
 
-                // CORRUPTION RECOVERY in Start Test
                 let savedTime = existing.time_remaining;
                 if (savedTime !== null && savedTime <= 0) {
                     savedTime = test.duration * 60;
@@ -216,16 +264,13 @@ const TakeTest = () => {
                         tab_switches: 0,
                         time_per_question: {},
                         time_remaining: test.duration * 60,
-                        last_active_at: new Date().toISOString()
+                        last_active_at: new Date().toISOString(),
+                        submitted_at: null
                     })
                     .select()
                     .single();
 
-                if (insertError) {
-                    console.error('Insert error:', insertError);
-                    throw insertError;
-                }
-
+                if (insertError) throw insertError;
                 setSubmissionId(newSubmission.id);
             }
 
@@ -244,8 +289,33 @@ const TakeTest = () => {
         }
     };
 
-    const handleAnswerChange = (questionId, value) => {
-        setAnswers(prev => ({ ...prev, [questionId]: value }));
+    // Resume test from the grace period modal
+    const handleResumeTest = async () => {
+        setShowResumeModal(false);
+        setTestStarted(true);
+        setTimerPaused(false);
+        if (containerRef.current) {
+            containerRef.current.requestFullscreen().catch(() => { });
+        }
+    };
+
+    // Instant save when answer changes
+    const handleAnswerChange = async (questionId, value) => {
+        const newAnswers = { ...answers, [questionId]: value };
+        setAnswers(newAnswers);
+
+        // Instant save to database
+        if (submissionId && timeRemaining > 0) {
+            try {
+                await supabase.from('test_submissions').update({
+                    answers: newAnswers,
+                    time_remaining: timeRemaining,
+                    last_active_at: new Date().toISOString()
+                }).eq('id', submissionId);
+            } catch (err) {
+                console.error('Instant save failed:', err);
+            }
+        }
     };
 
     const [showPalette, setShowPalette] = useState(false);
@@ -295,7 +365,13 @@ const TakeTest = () => {
     };
 
     const handleSubmit = async (autoSubmit = false) => {
-        if (submitting) return; // Prevent duplicate submissions
+        const timeSinceMount = Date.now() - mountTimeRef.current;
+
+        // Safety guards
+        if (!isMountedRef.current) return;
+        if (autoSubmit && timeSinceMount < MIN_TIME_BEFORE_SUBMIT) return;
+        if (submitting) return;
+        if (autoSubmit && !timerHasTickedRef.current) return;
 
         if (!autoSubmit) {
             const unanswered = test.questions.length - Object.keys(answers).length;
@@ -312,8 +388,6 @@ const TakeTest = () => {
             const { score, maxScore } = calculateScore();
             const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
             const timeTaken = test.duration * 60 - timeRemaining;
-
-            console.log('Submitting with:', { score, maxScore, percentage, answersCount: Object.keys(answers).length });
 
             const { error } = await supabase
                 .from('test_submissions')
@@ -366,6 +440,58 @@ const TakeTest = () => {
             <p>Loading test...</p>
         </div>
     );
+
+    // Resume Modal - shown when returning to an interrupted test
+    if (showResumeModal && resumeInfo) {
+        const formatTime = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        return (
+            <div ref={containerRef} style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '2.5rem' }}>
+                    <Clock size={48} style={{ margin: '0 auto 1.5rem', color: resumeInfo.withinGracePeriod ? 'var(--color-success)' : '#f59e0b' }} />
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+                        {resumeInfo.withinGracePeriod ? 'Welcome Back!' : 'Test Resumed'}
+                    </h1>
+
+                    <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+                        You were away for {Math.floor(resumeInfo.timeSinceLastActive / 60)} minutes {resumeInfo.timeSinceLastActive % 60} seconds
+                    </p>
+
+                    {resumeInfo.withinGracePeriod ? (
+                        <div style={{ backgroundColor: '#d1fae5', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', color: '#065f46' }}>
+                            <strong>Good news!</strong> You returned within the 5-minute grace period.
+                            <br />Your timer was paused at <strong>{formatTime(resumeInfo.savedTime)}</strong>
+                        </div>
+                    ) : (
+                        <div style={{ backgroundColor: '#fef3c7', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', color: '#92400e' }}>
+                            You were away longer than 5 minutes.
+                            <br /><strong>{Math.floor(resumeInfo.timeDeducted / 60)}:{(resumeInfo.timeDeducted % 60).toString().padStart(2, '0')}</strong> has been deducted.
+                            <br />Remaining time: <strong>{formatTime(resumeInfo.savedTime)}</strong>
+                        </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-lg)' }}>
+                        <div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Time Remaining</p>
+                            <p style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{formatTime(timeRemaining)}</p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Questions Answered</p>
+                            <p style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{Object.keys(answers).length}/{test.questions.length}</p>
+                        </div>
+                    </div>
+
+                    <button onClick={handleResumeTest} className="btn btn-primary" style={{ fontSize: '1.125rem', padding: '1rem 2rem', width: '100%' }}>
+                        Resume Test
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (!testStarted) {
         return (
