@@ -60,16 +60,25 @@ const TakeTest = () => {
 
     useEffect(() => {
         const handleVisibilityChange = () => {
-            if (document.hidden && testStarted && !submitting) {
+            if (document.hidden && testStarted && !submitting && submissionId && timeRemaining > 0) {
                 setTabSwitches(prev => prev + 1);
                 setTimerPaused(true);
                 setPausedAt(Date.now());
+
+                // Save current time immediately when page becomes hidden
+                supabase.from('test_submissions').update({
+                    answers,
+                    time_remaining: timeRemaining,
+                    tab_switches: tabSwitches + 1,
+                    time_per_question: timePerQuestion,
+                    last_active_at: new Date().toISOString()
+                }).eq('id', submissionId).then(() => { }).catch(() => { });
             }
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, [testStarted, submitting]);
+    }, [testStarted, submitting, submissionId, timeRemaining, answers, tabSwitches, timePerQuestion]);
 
     useEffect(() => {
         fetchTest();
@@ -110,7 +119,7 @@ const TakeTest = () => {
         }
     }, [timeRemaining, testStarted, submitting]);
 
-    // Auto-save progress every 30 seconds
+    // Auto-save progress every 10 seconds
     useEffect(() => {
         if (!testStarted || !submissionId || submitting) return;
         if (timeRemaining === null || timeRemaining <= 0) return;
@@ -127,7 +136,7 @@ const TakeTest = () => {
             } catch (err) {
                 console.error('Auto-save failed:', err);
             }
-        }, 30000);  // Save every 30 seconds (instant save handles individual changes)
+        }, 10000);  // Save every 10 seconds
 
         return () => clearInterval(saveInterval);
     }, [testStarted, submissionId, submitting, answers, timeRemaining, tabSwitches, timePerQuestion]);

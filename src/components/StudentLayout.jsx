@@ -25,15 +25,24 @@ const StudentLayout = ({ children }) => {
 
     return (
         <div className="app-layout">
-            {/* Mobile Nav Toggle */}
-            <button
-                className="mobile-nav-toggle"
-                onClick={toggleSidebar}
-                aria-label="Toggle Menu"
-                style={{ backgroundColor: '#a855f7', borderColor: '#a855f7' }}
-            >
-                {isSidebarOpen ? <X size={24} color="white" /> : <Menu size={24} color="white" />}
-            </button>
+            {/* Mobile Nav Toggle - only show when sidebar is closed */}
+            {!isSidebarOpen && (
+                <button
+                    className="mobile-nav-toggle"
+                    onClick={toggleSidebar}
+                    aria-label="Open Menu"
+                    style={{
+                        backgroundColor: '#a855f7',
+                        borderColor: '#a855f7',
+                        position: 'fixed',
+                        top: '1rem',
+                        left: '1rem',
+                        zIndex: 50
+                    }}
+                >
+                    <Menu size={24} color="white" />
+                </button>
+            )}
 
             {/* Sidebar Overlay */}
             <div
@@ -43,8 +52,8 @@ const StudentLayout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-                {/* Header */}
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
+                {/* Header with close button */}
+                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <div style={{
                             width: '40px',
@@ -65,6 +74,23 @@ const StudentLayout = ({ children }) => {
                             <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>Student</p>
                         </div>
                     </div>
+                    {/* Close button - only visible on mobile when sidebar is open */}
+                    <button
+                        onClick={closeSidebar}
+                        className="mobile-sidebar-close"
+                        style={{
+                            display: 'none',
+                            padding: '0.5rem',
+                            border: 'none',
+                            background: 'var(--color-bg)',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            color: 'var(--color-text-muted)'
+                        }}
+                        aria-label="Close Menu"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
                 {/* Navigation */}

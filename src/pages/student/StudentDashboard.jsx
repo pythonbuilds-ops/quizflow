@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Clock, Calendar, ChevronRight, Play, Check, AlertCircle, Trophy, Target, BookOpen } from 'lucide-react';
+import { Clock, Calendar, ChevronRight, Play, Check, AlertCircle, Trophy, Target, BookOpen, RotateCcw } from 'lucide-react';
 
 const StudentDashboard = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [tests, setTests] = useState({ available: [], upcoming: [], completed: [], expired: [] });
+    const [tests, setTests] = useState({ available: [], upcoming: [], completed: [], expired: [], inProgress: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [stats, setStats] = useState({ attempted: 0, avgScore: 0, totalTests: 0 });
+    const [stats, setStats] = useState({ attempted: 0, avgScore: 0, totalTests: 0, inProgress: 0 });
 
     useEffect(() => {
         if (user) fetchTests();
@@ -34,19 +34,22 @@ const StudentDashboard = () => {
 
             if (testsError) throw testsError;
 
-            // Get student's submissions
+            // Get student's completed submissions
             const { data: submissions, error: submissionsError } = await supabase
                 .from('test_submissions')
                 .select('test_id, score, percentage, submitted_at')
                 .eq('student_id', user.id)
                 .not('submitted_at', 'is', null);
 
-            if (submissionsError) console.error('Submissions error:', submissionsError);
+            // Get in-progress submissions (started but not submitted)
+            const { data: inProgressSubmissions, error: inProgressError } = await supabase
+                .from('test_submissions')
+                .select('test_id, time_remaining, answers, last_active_at')
+                .eq('student_id', user.id)
+                .is('submitted_at', null);
 
-            console.log('🔍 SUBMISSIONS DEBUG:', {
-                count: submissions?.length || 0,
-                testIds: submissions?.map(s => s.test_id) || []
-            });
+            if (submissionsError) console.error('Submissions error:', submissionsError);
+            if (inProgressError) console.error('In-progress error:', inProgressError);
 
             // Get ALL tests (including soft-deleted) for completed tests
             // Don't filter by teacher_id here - students should see their history regardless
@@ -88,15 +91,27 @@ const StudentDashboard = () => {
             }
 
             const now = new Date();
-            const categorized = { available: [], upcoming: [], completed: [], expired: [] };
+            const categorized = { available: [], upcoming: [], completed: [], expired: [], inProgress: [] };
+            const inProgressTestIds = inProgressSubmissions?.map(s => s.test_id) || [];
 
             activeTests.forEach(test => {
                 const start = new Date(test.start_time);
                 const end = new Date(test.end_time);
                 const hasSubmission = submissions?.some(s => s.test_id === test.id);
+                const inProgressSub = inProgressSubmissions?.find(s => s.test_id === test.id);
 
                 if (hasSubmission) {
-                    return;
+                    return; // Already in completed
+                } else if (inProgressSub) {
+                    // Mid-attempt test - show Resume button
+                    categorized.inProgress.push({
+                        ...test,
+                        inProgressData: {
+                            timeRemaining: inProgressSub.time_remaining,
+                            answersCount: Object.keys(inProgressSub.answers || {}).length,
+                            lastActive: inProgressSub.last_active_at
+                        }
+                    });
                 } else if (now < start) {
                     categorized.upcoming.push(test);
                 } else if (now > end) {
@@ -158,7 +173,8 @@ const StudentDashboard = () => {
                 avgScore: submissions?.length
                     ? (submissions.reduce((a, b) => a + b.percentage, 0) / submissions.length)
                     : 0,
-                totalTests: activeTests.length
+                totalTests: activeTests.length,
+                inProgress: categorized.inProgress.length
             });
 
         } catch (err) {
@@ -190,25 +206,37 @@ const StudentDashboard = () => {
         const isCompleted = type === 'completed';
         const isUpcoming = type === 'upcoming';
         const isExpired = type === 'expired';
+        const isInProgress = type === 'inProgress';
+
+        const formatTimeRemaining = (seconds) => {
+            if (!seconds) return '';
+            const mins = Math.floor(seconds / 60);
+            return `${mins} min left`;
+        };
 
         return (
             <div
-                onClick={() => isAvailable && navigate(`/student/test/${test.id}`)}
+                onClick={() => (isAvailable || isInProgress) && navigate(`/student/test/${test.id}`)}
                 className="card"
                 style={{
-                    cursor: isAvailable ? 'pointer' : 'default',
+                    cursor: (isAvailable || isInProgress) ? 'pointer' : 'default',
                     opacity: isExpired ? 0.7 : 1,
                     transition: 'transform 0.2s, box-shadow 0.2s',
-                    border: isAvailable ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                    border: isInProgress ? '1px solid #f59e0b' : isAvailable ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
                     position: 'relative',
                     overflow: 'hidden'
                 }}
-                onMouseOver={(e) => isAvailable && (e.currentTarget.style.transform = 'translateY(-2px)')}
-                onMouseOut={(e) => isAvailable && (e.currentTarget.style.transform = 'translateY(0)')}
+                onMouseOver={(e) => (isAvailable || isInProgress) && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                onMouseOut={(e) => (isAvailable || isInProgress) && (e.currentTarget.style.transform = 'translateY(0)')}
             >
                 {isAvailable && (
                     <div style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'var(--color-primary)', color: 'white', padding: '0.25rem 0.75rem', borderBottomLeftRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 600 }}>
                         LIVE
+                    </div>
+                )}
+                {isInProgress && (
+                    <div style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#f59e0b', color: 'white', padding: '0.25rem 0.75rem', borderBottomLeftRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 600 }}>
+                        IN PROGRESS
                     </div>
                 )}
 
@@ -236,11 +264,14 @@ const StudentDashboard = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                             <Clock size={16} />
-                            <span>{test.duration} mins</span>
+                            <span>{isInProgress ? formatTimeRemaining(test.inProgressData?.timeRemaining) : `${test.duration} mins`}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-                            <Calendar size={16} />
-                            <span>{new Date(test.start_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                            {isInProgress ? (
+                                <><Check size={16} /><span>{test.inProgressData?.answersCount || 0} answered</span></>
+                            ) : (
+                                <><Calendar size={16} /><span>{new Date(test.start_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span></>
+                            )}
                         </div>
                     </div>
 
@@ -259,7 +290,11 @@ const StudentDashboard = () => {
                         </div>
                     )}
 
-                    {isAvailable ? (
+                    {isInProgress ? (
+                        <button className="btn" style={{ width: '100%', justifyContent: 'center', padding: '0.875rem', backgroundColor: '#f59e0b', color: 'white' }}>
+                            Resume Test <RotateCcw size={16} style={{ marginLeft: '0.5rem' }} />
+                        </button>
+                    ) : isAvailable ? (
                         <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.875rem' }}>
                             Start Test <Play size={16} fill="currentColor" style={{ marginLeft: '0.5rem' }} />
                         </button>
@@ -340,6 +375,18 @@ const StudentDashboard = () => {
 
                 {/* Content Sections */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                    {tests.inProgress.length > 0 && (
+                        <section>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                <div style={{ width: '4px', height: '24px', backgroundColor: '#f59e0b', borderRadius: '2px' }}></div>
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Continue Where You Left Off</h2>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                                {tests.inProgress?.map(t => <TestCard key={t.id} test={t} type="inProgress" />)}
+                            </div>
+                        </section>
+                    )}
+
                     {tests.available.length > 0 && (
                         <section>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
