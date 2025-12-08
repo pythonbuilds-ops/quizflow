@@ -36,10 +36,18 @@ export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress
 
         DATA EXTRACTION RULES:
         1. **Sections**: Identify the current Subject (Physics, Chemistry, Math) and Section (Section I, Part A, etc.).
-        2. **Question Text**: Extract the full text. **CRITICAL**: Convert ALL mathematical expressions to LaTeX notation (e.g., convert 'sqrt(x)' to '$\\sqrt{x}$', 'x^2' to '$x^2$', '1/2' to '$\\frac{1}{2}$'). Use $...$ for inline math and $$...$$ for block math.
+        2. **Question Text**: Extract the full text. 
+           - **Statement Lists**: If a question has a list of statements (e.g., labeled P, Q, R, S or i, ii, iii, iv) followed by options (A, B, C, D) that choose between them, **KEEP THE STATEMENTS IN THE QUESTION TEXT**. Do not treat the statements as options.
+           - **Math**: *CRITICAL* Convert ALL mathematical expressions to LaTeX (e.g., 'sqrt(x)' -> '$\\sqrt{x}$').
         3. **Diagrams**: If a question contains a visual diagram/graph/figure, set "has_diagram" to true and append "[DIAGRAM]" to the end of the question text.
-        4. **Options**: Extract options. If it's an Integer type question, leave options empty.
-        5. **Answer Linking**: Scroll to the end of the document, find the Answer Key table, and map the correct answer to this question number.
+        4. **Options**: Extract the final selection options (A, B, C, D). 
+           - **Integer Type**: If there are no options A-D and the answer is a number, set type to "INTEGER" and leave options empty.
+        5. **Question Type**:
+           - **MCQ**: Single Correct Option. Even if the option text says "P and Q", if the user selects ONE bubble (e.g., "D"), it is MCQ.
+           - **MULTIMCQ**: Multiple Correct Options. Only use this if the user is expected to select TWO OR MORE distinct options (e.g., A AND B are both correct).
+           - **INTEGER**: Numerical answer, no options.
+           - **MATRIX**: Matching lists.
+        6. **Answer Linking**: Scroll to the end of the document, find the Answer Key table, and map the correct answer to this question number.
 
         JSON OUTPUT STRUCTURE:
         Return ONLY a JSON array. No markdown formatting.
@@ -49,7 +57,7 @@ export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress
                 "section": "Physics - Section I",
                 "question_number": "1",
                 "question_type": "MCQ" | "MULTIMCQ" | "INTEGER" | "MATRIX",
-                "question_text": "The full text of the question... [DIAGRAM]",
+                "question_text": "The full text of the question including any statements (P, Q, R, S)... [DIAGRAM]",
                 "has_diagram": true,
                 "options": [
                     { "id": "A", "text": "Option A text", "is_correct": false },
