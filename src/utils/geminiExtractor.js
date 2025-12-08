@@ -47,7 +47,7 @@ export const extractQuestionsWithGemini = async (file, _unusedApiKey, onProgress
            - **MULTIMCQ**: Multiple Correct Options. Only use this if the user is expected to select TWO OR MORE distinct options (e.g., A AND B are both correct).
            - **INTEGER**: Numerical answer, no options.
            - **MATRIX**: Matching lists.
-        6. **Answer Linking**: Scroll to the end of the document, find the Answer Key table, and map the correct answer to this question number.
+        6. **Answer Linking**: Scroll to the end of the document or anywhere in the PDF, find the Answer Key table, and map the correct answer to this question number.
 
         JSON OUTPUT STRUCTURE:
         Return ONLY a JSON array. No markdown formatting.

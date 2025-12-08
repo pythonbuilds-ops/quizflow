@@ -17,7 +17,7 @@ const TakeTest = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [markedForReview, setMarkedForReview] = useState(new Set());
-    const [timeRemaining, setTimeRemaining] = useState(0);
+    const [timeRemaining, setTimeRemaining] = useState(null); // Changed from 0 to null to prevent race condition
     const [timerPaused, setTimerPaused] = useState(false);
     const [pausedAt, setPausedAt] = useState(null);
     const [startTime] = useState(Date.now());
@@ -59,13 +59,13 @@ const TakeTest = () => {
         fetchTest();
     }, [testId]);
 
-    // Timer effect - FIXED: Separated submission logic to prevent race conditions
+    // Timer effect
     useEffect(() => {
-        if (timeRemaining > 0 && testStarted && !submitting && !timerPaused) {
+        if (timeRemaining !== null && timeRemaining > 0 && testStarted && !submitting && !timerPaused) {
             const timer = setInterval(() => {
                 setTimeRemaining(prev => {
                     if (prev <= 1) {
-                        return 0; // Don't submit here, let the separate effect handle it
+                        return 0;
                     }
 
                     // Track time per question
@@ -84,8 +84,9 @@ const TakeTest = () => {
         }
     }, [timeRemaining, testStarted, submitting, timerPaused, currentQuestionIndex, test]);
 
-    // FIXED: Separate effect for auto-submit when time runs out
+    // Auto-submit effect
     useEffect(() => {
+        // Strict check: timeRemaining must be exactly 0 (not null)
         if (timeRemaining === 0 && testStarted && !submitting) {
             console.log('Time up! Auto-submitting...');
             handleSubmit(true);
@@ -95,6 +96,8 @@ const TakeTest = () => {
     // Auto-save answers every 5 seconds
     useEffect(() => {
         if (!testStarted || !submissionId || submitting) return;
+        // Don't save if time is null
+        if (timeRemaining === null) return;
 
         const saveInterval = setInterval(async () => {
             try {
@@ -142,13 +145,21 @@ const TakeTest = () => {
 
             setTest(testData);
 
-            // FIXED: Resume if submission exists (not just if answers exist)
             if (existingSubmission) {
                 console.log('Resuming existing submission:', existingSubmission);
                 setSubmissionId(existingSubmission.id);
                 setAnswers(existingSubmission.answers || {});
                 setTabSwitches(existingSubmission.tab_switches || 0);
-                setTimeRemaining(existingSubmission.time_remaining || testData.duration * 60);
+
+                // CORRUPTION RECOVERY:
+                // If saved time is 0 but confirmed NOT submitted (checked above), reset it.
+                let savedTime = existingSubmission.time_remaining;
+                if (savedTime !== null && savedTime <= 0) {
+                    console.warn('Found 0 time for unsubmitted test. Resetting to duration.');
+                    savedTime = testData.duration * 60;
+                }
+
+                setTimeRemaining(savedTime !== null ? savedTime : testData.duration * 60);
                 setTimePerQuestion(existingSubmission.time_per_question || {});
                 setTestStarted(true);
 
@@ -156,7 +167,6 @@ const TakeTest = () => {
                     containerRef.current.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
                 }
             } else {
-                // Don't create submission yet - wait for user to click Start Test
                 setTimeRemaining(testData.duration * 60);
             }
         } catch (error) {
@@ -170,7 +180,6 @@ const TakeTest = () => {
 
     const handleStartTest = async () => {
         try {
-            // FIXED: Check if submission exists first
             const { data: existing } = await supabase
                 .from('test_submissions')
                 .select('*')
@@ -179,12 +188,18 @@ const TakeTest = () => {
                 .maybeSingle();
 
             if (existing) {
-                // If submission already exists, just start the test (resume)
                 console.log('Resuming existing submission');
                 setSubmissionId(existing.id);
                 setAnswers(existing.answers || {});
                 setTabSwitches(existing.tab_switches || 0);
-                setTimeRemaining(existing.time_remaining || test.duration * 60);
+
+                // CORRUPTION RECOVERY in Start Test
+                let savedTime = existing.time_remaining;
+                if (savedTime !== null && savedTime <= 0) {
+                    savedTime = test.duration * 60;
+                }
+
+                setTimeRemaining(savedTime !== null ? savedTime : test.duration * 60);
                 setTimePerQuestion(existing.time_per_question || {});
             } else {
                 // Create NEW submission only if none exists
@@ -451,12 +466,18 @@ const TakeTest = () => {
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '0.5rem',
                     padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-full)',
-                    backgroundColor: timeRemaining < 300 ? '#fef2f2' : '#eff6ff',
-                    color: timeRemaining < 300 ? '#dc2626' : '#2563eb',
+                    backgroundColor: (timeRemaining || 0) < 300 ? '#fef2f2' : '#eff6ff',
+                    color: (timeRemaining || 0) < 300 ? '#dc2626' : '#2563eb',
                     fontWeight: 'bold', fontFamily: 'monospace', fontSize: '0.9rem'
                 }}>
                     <Clock size={16} />
-                    {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                    {timeRemaining === null ? (
+                        <span>--:--</span>
+                    ) : (
+                        <span>
+                            {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                        </span>
+                    )}
                 </div>
             </header>
 
