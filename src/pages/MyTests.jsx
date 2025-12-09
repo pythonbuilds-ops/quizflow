@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Clock, Calendar, Trash2, Eye, BarChart2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
 
 const MyTests = () => {
     const navigate = useNavigate();
@@ -35,7 +38,6 @@ const MyTests = () => {
     const deleteTest = async (id) => {
         if (window.confirm('⚠️ PERMANENTLY DELETE this test and ALL student submissions? This cannot be undone!')) {
             try {
-                // Hard delete - removes test and cascades to delete all submissions
                 const { error } = await supabase
                     .from('tests')
                     .delete()
@@ -43,7 +45,7 @@ const MyTests = () => {
 
                 if (error) throw error;
 
-                alert('✅ Test and all data permanently deleted.');
+                // Optimistic UI update
                 setTests(tests.filter(t => t.id !== id));
             } catch (error) {
                 console.error('Error deleting test:', error);
@@ -52,176 +54,134 @@ const MyTests = () => {
         }
     };
 
-    if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    if (loading) return (
+        <div className="flex min-h-[50vh] items-center justify-center">
+            <div className="animate-pulse text-lg font-medium text-muted-foreground">Loading tests...</div>
+        </div>
+    );
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
-            <div className="container" style={{ padding: '2rem 1rem' }}>
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'var(--color-text-muted)',
-                        background: 'none',
-                        border: 'none',
-                        marginBottom: '1.5rem',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        padding: 0
-                    }}
-                >
-                    <ArrowLeft size={16} style={{ marginRight: '0.5rem' }} />
-                    Back to Dashboard
-                </button>
-
-                {/* Header - Mobile Responsive */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem',
-                    marginBottom: '2rem'
-                }}>
-                    <div>
-                        <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 1.875rem)', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>My Tests</h1>
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Manage your assessments.</p>
-                    </div>
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => navigate('/create-test')}
-                        style={{ width: '100%' }}
-                    >
-                        <Plus size={16} />
-                        New Test
-                    </button>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">My Tests</h2>
+                    <p className="text-muted-foreground">Manage your assessments and view results.</p>
                 </div>
-
-                {tests.length === 0 ? (
-                    <div style={{
-                        textAlign: 'center',
-                        padding: '3rem 1rem',
-                        border: '1px dashed var(--color-border)',
-                        borderRadius: 'var(--radius-lg)'
-                    }}>
-                        <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }}>No tests created yet.</p>
-                        <button
-                            style={{ color: 'var(--color-text-main)', fontWeight: 500, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
-                            onClick={() => navigate('/create-test')}
-                        >
-                            Create your first test
-                        </button>
-                    </div>
-                ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-                        {tests?.map((test) => (
-                            <div key={test.id} className="card test-card" style={{ padding: '1rem' }}>
-                                {/* Title and Subject */}
-                                <div style={{ marginBottom: '0.75rem' }}>
-                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-text-main)', margin: '0 0 0.5rem 0' }}>{test.title}</h3>
-                                    <span style={{
-                                        display: 'inline-block',
-                                        padding: '0.125rem 0.5rem',
-                                        backgroundColor: 'var(--color-bg)',
-                                        color: 'var(--color-text-muted)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        borderRadius: 'var(--radius-sm)',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em'
-                                    }}>
-                                        {test.subject || 'General'}
-                                    </span>
-                                </div>
-
-                                {/* Info Grid - Mobile Responsive */}
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 150px))',
-                                    gap: '0.75rem',
-                                    fontSize: '0.875rem',
-                                    color: 'var(--color-text-muted)',
-                                    marginBottom: '1rem'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Clock size={14} />
-                                        {test.duration}m
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Calendar size={14} />
-                                        {new Date(test.start_time).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span style={{ fontWeight: 500, color: 'var(--color-text-main)' }}>{test.test_submissions?.[0]?.count || 0}</span>
-                                        Students
-                                    </div>
-                                </div>
-
-                                {/* Actions - Mobile Optimized */}
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(3, 1fr)',
-                                    gap: '0.5rem',
-                                    paddingTop: '0.75rem',
-                                    borderTop: '1px solid var(--color-border)'
-                                }}>
-                                    <button
-                                        onClick={() => navigate(`/test/${test.id}/preview`)}
-                                        className="btn btn-outline"
-                                        style={{
-                                            padding: '0.625rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '0.375rem',
-                                            fontSize: '0.8125rem'
-                                        }}
-                                        title="Preview"
-                                    >
-                                        <Eye size={16} />
-                                        <span className="hidden md:inline">Preview</span>
-                                    </button>
-                                    <button
-                                        onClick={() => navigate(`/test/${test.id}/analytics`)}
-                                        className="btn btn-outline"
-                                        style={{
-                                            padding: '0.625rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '0.375rem',
-                                            fontSize: '0.8125rem'
-                                        }}
-                                        title="Analytics"
-                                    >
-                                        <BarChart2 size={16} />
-                                        <span className="hidden md:inline">Analytics</span>
-                                    </button>
-                                    <button
-                                        onClick={() => deleteTest(test.id)}
-                                        className="btn btn-outline"
-                                        style={{
-                                            padding: '0.625rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '0.375rem',
-                                            color: 'var(--color-error)',
-                                            fontSize: '0.8125rem'
-                                        }}
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={16} />
-                                        <span className="hidden md:inline">Delete</span>
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <Button onClick={() => navigate('/create-test')} className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Test
+                </Button>
             </div>
+
+            {tests.length === 0 ? (
+                <Card className="flex flex-col items-center justify-center py-12 text-center border-dashed">
+                    <div className="rounded-full bg-primary/10 p-4 mb-4">
+                        <Plus className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold">No tests created yet</h3>
+                    <p className="text-muted-foreground mb-4 max-w-sm">
+                        Create your first test to start assessing your students.
+                    </p>
+                    <Button onClick={() => navigate('/create-test')}>
+                        Create Test
+                    </Button>
+                </Card>
+            ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {tests?.map((test) => (
+                        <Card key={test.id} className="group flex flex-col hover:shadow-lg transition-all duration-300">
+                            <CardHeader>
+                                <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                        <CardTitle className="line-clamp-1" title={test.title}>
+                                            {test.title}
+                                        </CardTitle>
+                                        <Badge variant="secondary" className="font-normal capitalize">
+                                            {test.subject || 'General'}
+                                        </Badge>
+                                    </div>
+                                    <Badge variant={new Date() > new Date(test.end_time) ? "outline" : "default"}>
+                                        {new Date() > new Date(test.end_time) ? "Ended" : "Active"}
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="flex-1">
+                                <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-4 w-4" />
+                                        <span>{test.duration} mins</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>{new Date(test.start_time).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                                    </div>
+                                    <div className="col-span-2 flex items-center gap-2">
+                                        <Users className="h-4 w-4" />
+                                        <span>{test.test_submissions?.[0]?.count || 0} Submissions</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                            <CardFooter className="grid grid-cols-3 gap-2 border-t bg-muted/20 p-4">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-center"
+                                    onClick={() => navigate(`/test/${test.id}/preview`)}
+                                    title="Preview"
+                                >
+                                    <Eye className="h-4 w-4 md:mr-2" />
+                                    <span className="hidden md:inline">View</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-center"
+                                    onClick={() => navigate(`/test/${test.id}/analytics`)}
+                                    title="Analytics"
+                                >
+                                    <BarChart2 className="h-4 w-4 md:mr-2" />
+                                    <span className="hidden md:inline">Stats</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-center text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    onClick={() => deleteTest(test.id)}
+                                    title="Delete"
+                                >
+                                    <Trash2 className="h-4 w-4 md:mr-2" />
+                                    <span className="hidden md:inline">Delete</span>
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
+
+// Helper component for icon
+function Users({ className }) {
+    return (
+        <svg
+            className={className}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    )
+}
 
 export default MyTests;

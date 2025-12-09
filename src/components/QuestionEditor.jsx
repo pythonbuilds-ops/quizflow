@@ -1,5 +1,14 @@
 import React, { useRef } from 'react';
-import { Trash2, Plus, Image as ImageIcon, X, CheckSquare, Square } from 'lucide-react';
+import { Trash2, Plus, Image as ImageIcon, X, CheckSquare, Square, MoreHorizontal } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Label } from '../components/ui/Label';
+import { Textarea } from '../components/ui/Textarea';
+import { Badge } from '../components/ui/Badge';
+import { Switch } from '../components/ui/Switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
+import { cn } from '../lib/utils';
 
 const QuestionEditor = ({ question, index, onUpdate, onDelete }) => {
     const fileInputRef = useRef(null);
@@ -62,11 +71,8 @@ const QuestionEditor = ({ question, index, onUpdate, onDelete }) => {
     };
 
     const toggleMultiSelect = () => {
-        // If switching to single select, keep only the first correct answer or none
         let newOptions = [...question.options];
-        if (!question.multiSelect) {
-            // Switching TO multi-select: no changes needed initially
-        } else {
+        if (question.multiSelect) {
             // Switching TO single-select: reset all but first correct
             let foundCorrect = false;
             newOptions = newOptions.map(opt => {
@@ -81,307 +87,239 @@ const QuestionEditor = ({ question, index, onUpdate, onDelete }) => {
     };
 
     return (
-        <div className="card" style={{ marginBottom: '1.5rem', position: 'relative' }}>
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '1rem'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Question {index + 1}</h3>
+        <Card className="mb-6 border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow relative overflow-visible">
+            <CardHeader className="flex flex-row items-center justify-between pb-4 border-b bg-muted/20">
+                <div className="flex items-center gap-4 flex-1">
+                    <Badge variant="outline" className="h-7 w-7 rounded-lg flex items-center justify-center bg-background border-2 font-bold text-sm">
+                        {index + 1}
+                    </Badge>
 
-                    {/* Diagram Badge */}
                     {question.text && question.text.includes('[diagram]') && (
-                        <span style={{
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '0.25rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                        }}>
+                        <Badge variant="destructive" className="uppercase text-[10px] tracking-wider">
                             Diagram Required
-                        </span>
+                        </Badge>
                     )}
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                        <input
-                            type="checkbox"
-                            checked={question.multiSelect || false}
-                            onChange={toggleMultiSelect}
-                            style={{ accentColor: 'var(--color-primary)' }}
-                        />
-                        Multi-correct
-                    </label>
+                    <div className="flex items-center gap-2 ml-auto lg:ml-0">
+                        <label className="text-xs font-medium cursor-pointer flex items-center gap-2 px-2 py-1 hover:bg-muted rounded-md transition-colors select-none">
+                            <input
+                                type="checkbox"
+                                checked={question.multiSelect || false}
+                                onChange={toggleMultiSelect}
+                                className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                            />
+                            Multi-correct
+                        </label>
+                    </div>
                 </div>
-                <button
-                    onClick={onDelete}
-                    style={{
-                        color: 'var(--color-error)',
-                        background: 'transparent',
-                        border: 'none',
-                        padding: '0.25rem',
-                        cursor: 'pointer'
-                    }}
-                    title="Delete Question"
-                >
-                    <Trash2 size={18} />
-                </button>
-            </div>
 
-            {/* Question Type Selector */}
-            <div style={{ marginBottom: '1rem' }}>
-                <label className="label">Question Type</label>
-                <select
-                    className="input"
-                    value={question.type || 'mcq'}
-                    onChange={(e) => {
-                        const newType = e.target.value;
-                        if (newType === 'integer') {
-                            // Integer: no options, add correctAnswer field
-                            onUpdate({ ...question, type: newType, options: [], correctAnswer: question.correctAnswer || '' });
-                        } else {
-                            // MCQ/Matrix/Comprehension: needs options
-                            const defaultOptions = question.options && question.options.length > 0
-                                ? question.options
-                                : [
-                                    { id: Date.now(), text: '', image: null, isCorrect: false },
-                                    { id: Date.now() + 1, text: '', image: null, isCorrect: false }
-                                ];
-                            onUpdate({ ...question, type: newType, options: defaultOptions, correctAnswer: undefined });
-                        }
-                    }}
-                    style={{ width: 'auto', minWidth: '200px' }}
-                >
-                    <option value="mcq">Multiple Choice</option>
-                    <option value="integer">Integer Answer</option>
-                    <option value="matrix">Matrix Matching</option>
-                    <option value="comprehension">Comprehension</option>
-                </select>
-            </div>
-
-            {/* Passage (for comprehension) */}
-            {question.type === 'comprehension' && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Passage</label>
-                    <textarea
-                        className="input"
-                        value={question.passage || ''}
-                        onChange={(e) => onUpdate({ ...question, passage: e.target.value })}
-                        placeholder="Enter the comprehension passage here..."
-                        rows={5}
-                        style={{ resize: 'vertical', fontFamily: 'Georgia, serif', fontSize: '0.9rem' }}
-                    />
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={onDelete}
+                        title="Delete Question"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
                 </div>
-            )}
+            </CardHeader>
 
-            {/* Explanation (for complex questions) */}
-            {(question.type === 'matrix' || question.type === 'comprehension') && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Explanation/Context (Optional)</label>
-                    <textarea
-                        className="input"
-                        value={question.explanation || ''}
-                        onChange={(e) => onUpdate({ ...question, explanation: e.target.value })}
-                        placeholder="Add any additional context or instructions..."
-                        rows={2}
-                        style={{ resize: 'vertical', fontSize: '0.875rem' }}
-                    />
-                </div>
-            )}
-
-            <div style={{ marginBottom: '1.5rem' }}>
-                <label className="label">Question Text</label>
-                <textarea
-                    className="input"
-                    value={question.text}
-                    onChange={(e) => onUpdate({ ...question, text: e.target.value })}
-                    placeholder="Enter your question here..."
-                    rows={3}
-                    style={{ resize: 'vertical', marginBottom: '0.5rem' }}
-                />
-
-                {question.image ? (
-                    <div style={{ position: 'relative', display: 'inline-block', marginTop: '0.5rem' }}>
-                        <img src={question.image} alt="Question" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }} />
-                        <button
-                            onClick={() => removeImage('question')}
-                            style={{
-                                position: 'absolute',
-                                top: '-8px',
-                                right: '-8px',
-                                background: 'var(--color-error)',
-                                color: 'white',
-                                borderRadius: '50%',
-                                border: 'none',
-                                width: '24px',
-                                height: '24px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer'
+            <CardContent className="p-6 space-y-6">
+                {/* Question Type Selector */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <Label className="mb-2 block">Question Type</Label>
+                        <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={question.type || 'mcq'}
+                            onChange={(e) => {
+                                const newType = e.target.value;
+                                if (newType === 'integer') {
+                                    onUpdate({ ...question, type: newType, options: [], correctAnswer: question.correctAnswer || '' });
+                                } else {
+                                    const defaultOptions = question.options && question.options.length > 0
+                                        ? question.options
+                                        : [
+                                            { id: Date.now(), text: '', image: null, isCorrect: false },
+                                            { id: Date.now() + 1, text: '', image: null, isCorrect: false }
+                                        ];
+                                    onUpdate({ ...question, type: newType, options: defaultOptions, correctAnswer: undefined });
+                                }
                             }}
                         >
-                            <X size={14} />
-                        </button>
+                            <option value="mcq">Multiple Choice (MCQ)</option>
+                            <option value="integer">Integer Answer</option>
+                            <option value="matrix">Matrix Matching</option>
+                            <option value="comprehension">Comprehension</option>
+                        </select>
                     </div>
-                ) : (
-                    <div style={{ marginTop: '0.5rem' }}>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            ref={fileInputRef}
-                            onChange={(e) => handleImageUpload(e, 'question')}
+                </div>
+
+                {/* Passage */}
+                {question.type === 'comprehension' && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2">
+                        <Label>Passage</Label>
+                        <Textarea
+                            value={question.passage || ''}
+                            onChange={(e) => onUpdate({ ...question, passage: e.target.value })}
+                            placeholder="Enter the comprehension passage here..."
+                            rows={5}
+                            className="font-serif text-base resize-y min-h-[120px]"
                         />
-                        <button
-                            className="btn btn-outline"
-                            style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem' }}
-                            onClick={() => fileInputRef.current.click()}
-                        >
-                            <ImageIcon size={16} />
-                            Add Image
-                        </button>
                     </div>
                 )}
-            </div>
 
-            {/* Correct Answer for Integer Type */}
-            {question.type === 'integer' && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Correct Answer (Numerical)</label>
-                    <input
-                        type="number"
-                        className="input"
-                        value={question.correctAnswer || ''}
-                        onChange={(e) => onUpdate({ ...question, correctAnswer: e.target.value })}
-                        placeholder="e.g. 25"
-                        step="any"
-                    />
+                {/* Question Text & Image */}
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>Question Text</Label>
+                        <Textarea
+                            value={question.text}
+                            onChange={(e) => onUpdate({ ...question, text: e.target.value })}
+                            placeholder="Enter your question here..."
+                            rows={3}
+                            className="resize-y min-h-[80px] font-medium"
+                        />
+                    </div>
+
+                    {question.image ? (
+                        <div className="relative inline-block group">
+                            <img
+                                src={question.image}
+                                alt="Question"
+                                className="max-w-full max-h-[300px] rounded-lg border shadow-sm object-contain bg-muted/10"
+                            />
+                            <Button
+                                size="icon"
+                                variant="destructive"
+                                className="absolute -top-3 -right-3 h-7 w-7 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => removeImage('question')}
+                            >
+                                <X className="w-3 h-3" />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={(e) => handleImageUpload(e, 'question')}
+                            />
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => fileInputRef.current.click()}
+                                className="gap-2"
+                            >
+                                <ImageIcon className="w-4 h-4" />
+                                Add Image
+                            </Button>
+                        </div>
+                    )}
                 </div>
-            )}
 
-            {question.type !== 'integer' && (
-                <div>
-                    <label className="label" style={{ marginBottom: '0.5rem' }}>Options</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {question.options.map((opt, optIndex) => (
-                            <div key={optIndex} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                                <button
-                                    onClick={() => toggleCorrectAnswer(optIndex)}
-                                    style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: opt.isCorrect ? 'var(--color-success)' : 'var(--color-text-muted)',
-                                        cursor: 'pointer',
-                                        padding: '0.5rem 0', // Align with input text
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minWidth: '24px'
-                                    }}
-                                    title={opt.isCorrect ? "Correct Answer" : "Mark as Correct"}
-                                >
-                                    {opt.isCorrect ? <CheckSquare size={24} /> : <Square size={24} />}
-                                </button>
+                {/* Answer Section */}
+                {question.type === 'integer' ? (
+                    <div className="p-4 bg-muted/30 rounded-lg border border-dashed animate-in fade-in">
+                        <Label className="mb-2 block text-primary">Correct Numerical Answer</Label>
+                        <Input
+                            type="number"
+                            value={question.correctAnswer || ''}
+                            onChange={(e) => onUpdate({ ...question, correctAnswer: e.target.value })}
+                            placeholder="e.g. 25"
+                            step="any"
+                            className="max-w-[200px] font-mono font-bold text-lg"
+                        />
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <Label>Options</Label>
+                        <div className="grid gap-3">
+                            {question.options.map((opt, optIndex) => (
+                                <div key={optIndex} className="flex items-start gap-3 group">
+                                    <button
+                                        onClick={() => toggleCorrectAnswer(optIndex)}
+                                        className={cn(
+                                            "mt-2 h-6 w-6 shrink-0 flex items-center justify-center rounded-md border-2 transition-colors",
+                                            opt.isCorrect
+                                                ? "bg-green-500 border-green-500 text-white"
+                                                : "border-muted-foreground/30 text-transparent hover:border-primary/50"
+                                        )}
+                                        title={opt.isCorrect ? "Correct Answer" : "Mark as Correct"}
+                                    >
+                                        <CheckSquare className="w-4 h-4 fill-current" />
+                                    </button>
 
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <input
-                                            type="text"
-                                            className="input"
-                                            value={opt.text}
-                                            onChange={(e) => handleOptionTextChange(optIndex, e.target.value)}
-                                            placeholder={`Option ${optIndex + 1}`}
-                                            style={{
-                                                borderColor: opt.isCorrect ? 'var(--color-success)' : 'var(--color-border)',
-                                                backgroundColor: opt.isCorrect ? 'rgba(16, 185, 129, 0.05)' : 'var(--color-surface)'
-                                            }}
-                                        />
-                                        <button
-                                            onClick={() => removeOption(optIndex)}
-                                            style={{
-                                                color: 'var(--color-text-muted)',
-                                                background: 'transparent',
-                                                border: 'none',
-                                                padding: '0.5rem',
-                                                cursor: 'pointer'
-                                            }}
-                                            title="Remove Option"
-                                            disabled={question.options.length <= 2}
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                    <div className="flex-1 space-y-2">
+                                        <div className="flex gap-2">
+                                            <Input
+                                                value={opt.text}
+                                                onChange={(e) => handleOptionTextChange(optIndex, e.target.value)}
+                                                placeholder={`Option ${optIndex + 1}`}
+                                                className={cn(
+                                                    "flex-1 transition-all",
+                                                    opt.isCorrect && "border-green-500 ring-1 ring-green-500/20 bg-green-50/10"
+                                                )}
+                                            />
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => removeOption(optIndex)}
+                                                disabled={question.options.length <= 2}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+
+                                        {opt.image && (
+                                            <div className="relative inline-block group/img">
+                                                <img
+                                                    src={opt.image}
+                                                    alt={`Option ${optIndex + 1}`}
+                                                    className="h-16 w-auto rounded border bg-white object-contain"
+                                                />
+                                                <Button
+                                                    size="icon"
+                                                    variant="destructive"
+                                                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-[10px] opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                                    onClick={() => removeImage('option', optIndex)}
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {opt.image && (
-                                        <div style={{ position: 'relative', display: 'inline-block', marginTop: '0.5rem' }}>
-                                            <img src={opt.image} alt={`Option ${optIndex + 1}`} style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }} />
-                                            <button
-                                                onClick={() => removeImage('option', optIndex)}
-                                                style={{
-                                                    position: 'absolute',
-                                                    top: '-6px',
-                                                    right: '-6px',
-                                                    background: 'var(--color-error)',
-                                                    color: 'white',
-                                                    borderRadius: '50%',
-                                                    border: 'none',
-                                                    width: '20px',
-                                                    height: '20px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                <X size={12} />
-                                            </button>
-                                        </div>
-                                    )}
-
                                     {!opt.image && (
-                                        <div style={{ marginTop: '0.25rem' }}>
-                                            <label
-                                                style={{
-                                                    fontSize: '0.75rem',
-                                                    color: 'var(--color-primary)',
-                                                    cursor: 'pointer',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.25rem'
-                                                }}
-                                            >
-                                                <ImageIcon size={12} />
-                                                Add Image
+                                        <div className="mt-2 shrink-0">
+                                            <label className="cursor-pointer text-muted-foreground hover:text-primary transition-colors">
+                                                <ImageIcon className="w-5 h-5" />
                                                 <input
                                                     type="file"
                                                     accept="image/*"
-                                                    style={{ display: 'none' }}
+                                                    className="hidden"
                                                     onChange={(e) => handleImageUpload(e, 'option', optIndex)}
                                                 />
                                             </label>
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
 
-                    <button
-                        className="btn btn-outline"
-                        onClick={addOption}
-                        style={{ marginTop: '1rem', fontSize: '0.875rem', padding: '0.25rem 0.75rem' }}
-                    >
-                        <Plus size={16} />
-                        Add Option
-                    </button>
-                </div>
-            )}
-        </div>
+                        <Button variant="outline" size="sm" onClick={addOption} className="gap-2 text-primary hover:text-primary border-primary/20 hover:bg-primary/5">
+                            <Plus className="w-4 h-4" />
+                            Add Option
+                        </Button>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 };
 

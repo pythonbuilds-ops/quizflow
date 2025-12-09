@@ -16,126 +16,36 @@ const CalculatingResults = () => {
     }, [navigate, testId]);
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, #6366f1 100%)',
-            padding: '2rem'
-        }}>
-            <div style={{
-                textAlign: 'center',
-                maxWidth: '500px',
-                animation: 'fadeInUp 0.6s ease-out'
-            }}>
-                <div style={{
-                    width: '100px',
-                    height: '100px',
-                    margin: '0 auto 2rem',
-                    position: 'relative'
-                }}>
-                    <Loader2
-                        size={100}
-                        style={{
-                            color: 'white',
-                            animation: 'spin 2s linear infinite'
-                        }}
-                    />
-                    <TrendingUp
-                        size={40}
-                        style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            color: 'white'
-                        }}
-                    />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-indigo-600 p-8">
+            <div className="text-center max-w-lg w-full animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="w-24 h-24 mx-auto mb-8 relative">
+                    <Loader2 className="w-full h-full text-white animate-spin" />
+                    <TrendingUp className="w-10 h-10 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
 
-                <h1 style={{
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    marginBottom: '1rem',
-                    animation: 'pulse 2s ease-in-out infinite'
-                }}>
+                <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 animate-pulse">
                     Calculating Your Results
                 </h1>
 
-                <p style={{
-                    fontSize: '1.125rem',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    marginBottom: '2rem'
-                }}>
+                <p className="text-lg text-white/90 mb-8">
                     Analyzing your performance...
                 </p>
 
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    fontSize: '0.875rem',
-                    color: 'rgba(255, 255, 255, 0.8)'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                        <div style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: 'white',
-                            animation: 'blink 1.4s infinite'
-                        }} />
+                <div className="flex flex-col gap-3 text-sm text-white/80">
+                    <div className="flex items-center justify-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-white animate-ping" />
                         <span>Scoring your answers</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                        <div style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: 'white',
-                            animation: 'blink 1.4s infinite 0.2s'
-                        }} />
+                    <div className="flex items-center justify-center gap-2 delay-150">
+                        <div className="w-2 h-2 rounded-full bg-white animate-ping delay-75" />
                         <span>Computing percentile</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                        <div style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: 'white',
-                            animation: 'blink 1.4s infinite 0.4s'
-                        }} />
+                    <div className="flex items-center justify-center gap-2 delay-300">
+                        <div className="w-2 h-2 rounded-full bg-white animate-ping delay-150" />
                         <span>Generating analysis</span>
                     </div>
                 </div>
             </div>
-
-            <style>{`
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.8; }
-                }
-                @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(30px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                @keyframes blink {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.3; }
-                }
-            `}</style>
         </div>
     );
 };

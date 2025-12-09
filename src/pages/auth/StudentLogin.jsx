@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { GraduationCap, Loader2 } from 'lucide-react';
+import { GraduationCap, Loader2, ArrowLeft } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Label } from '../../components/ui/Label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
+import { cn } from '../../lib/utils';
 
 const StudentLogin = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -35,112 +40,112 @@ const StudentLogin = () => {
     };
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--color-bg)',
-            color: 'var(--color-text-main)',
-            padding: '1rem'
-        }}>
-            <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div style={{ display: 'inline-flex', padding: '0.75rem', borderRadius: '50%', backgroundColor: 'rgba(192, 132, 252, 0.1)', marginBottom: '1rem' }}>
-                        <GraduationCap size={32} color="#c084fc" />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-500/10 via-background to-fuchsia-500/10 p-4">
+            <Card className="w-full max-w-md border-border/40 shadow-2xl bg-card/80 backdrop-blur-sm">
+                <CardHeader className="text-center space-y-2">
+                    <div className="mx-auto w-12 h-12 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center mb-2">
+                        <GraduationCap className="h-6 w-6 text-violet-600 dark:text-violet-400" />
                     </div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    <CardTitle className="text-2xl font-bold text-violet-950 dark:text-violet-50">
                         {isLogin ? 'Student Login' : 'Student Registration'}
-                    </h1>
-                    <p style={{ color: 'var(--color-text-muted)' }}>
+                    </CardTitle>
+                    <CardDescription>
                         {isLogin ? 'Ready to ace your tests?' : 'Join your class with a teacher code.'}
-                    </p>
-                </div>
+                    </CardDescription>
+                </CardHeader>
 
-                {error && (
-                    <div style={{ padding: '0.75rem', backgroundColor: '#fee2e2', color: '#ef4444', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit}>
-                    {!isLogin && (
-                        <>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label className="label">Full Name</label>
-                                <input
-                                    type="text"
-                                    className="input"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label className="label">Teacher Code</label>
-                                <input
-                                    type="text"
-                                    className="input"
-                                    value={teacherCode}
-                                    onChange={(e) => setTeacherCode(e.target.value.toUpperCase())}
-                                    placeholder="e.g. T-8X29A"
-                                    required
-                                />
-                                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                                    Ask your teacher for their unique code.
-                                </p>
-                            </div>
-                        </>
+                <CardContent>
+                    {error && (
+                        <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm font-medium">
+                            {error}
+                        </div>
                     )}
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label className="label">Email Address</label>
-                        <input
-                            type="email"
-                            className="input"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label className="label">Password</label>
-                        <input
-                            type="password"
-                            className="input"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary"
-                        style={{ width: '100%', backgroundColor: '#c084fc', borderColor: '#c084fc' }}
-                        disabled={loading}
-                    >
-                        {loading ? <Loader2 className="spin" /> : (isLogin ? 'Sign In' : 'Create Account')}
-                    </button>
-                </form>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {!isLogin && (
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="fullName">Full Name</Label>
+                                    <Input
+                                        id="fullName"
+                                        type="text"
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        required
+                                        className="focus-visible:ring-violet-500"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="teacherCode">Teacher Code</Label>
+                                    <Input
+                                        id="teacherCode"
+                                        type="text"
+                                        value={teacherCode}
+                                        onChange={(e) => setTeacherCode(e.target.value.toUpperCase())}
+                                        required
+                                        className="uppercase placeholder:normal-case focus-visible:ring-violet-500"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Ask your teacher for their unique code.
+                                    </p>
+                                </div>
+                            </>
+                        )}
 
-                <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="focus-visible:ring-violet-500"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="focus-visible:ring-violet-500"
+                            />
+                        </div>
+
+                        <Button
+                            type="submit"
+                            className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                            disabled={loading}
+                        >
+                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isLogin ? 'Sign In' : 'Create Account'}
+                        </Button>
+                    </form>
+                </CardContent>
+
+                <CardFooter className="flex flex-col gap-4 text-center">
+                    <div className="text-sm text-muted-foreground">
                         {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    </span>
-                    <button
-                        onClick={() => setIsLogin(!isLogin)}
-                        style={{ background: 'none', border: 'none', color: '#c084fc', cursor: 'pointer', fontWeight: 600 }}
-                    >
-                        {isLogin ? 'Sign Up' : 'Sign In'}
-                    </button>
-                </div>
+                        <button
+                            onClick={() => setIsLogin(!isLogin)}
+                            className="text-violet-600 hover:text-violet-700 font-semibold underline-offset-4 hover:underline"
+                        >
+                            {isLogin ? 'Sign Up' : 'Sign In'}
+                        </button>
+                    </div>
 
-                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                    <Link to="/" style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textDecoration: 'none' }}>
-                        ← Back to Home
-                    </Link>
-                </div>
-            </div>
+                    <Button variant="link" asChild className="text-muted-foreground">
+                        <Link to="/" className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            <span>Back to Home</span>
+                        </Link>
+                    </Button>
+                </CardFooter>
+            </Card>
         </div>
     );
 };

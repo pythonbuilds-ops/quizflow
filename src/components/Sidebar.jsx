@@ -1,8 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, ListChecks, LogOut, Moon, Sun, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, ListChecks, LogOut, Moon, Sun, Settings as SettingsIcon, BookOpen, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { cn } from '../lib/utils';
+import { Button } from './ui/Button';
 
 const Sidebar = ({ isOpen, onClose }) => {
     const { signOut } = useAuth();
@@ -12,96 +14,86 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
         { icon: PlusCircle, label: 'Create Test', path: '/create-test' },
         { icon: ListChecks, label: 'My Tests', path: '/tests' },
+        { icon: Users, label: 'Students', path: '/students' },
         { icon: SettingsIcon, label: 'Settings', path: '/settings' },
     ];
 
     return (
-        <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>Teacher Portal</h2>
-            </div>
+        <>
+            {/* Mobile Overlay */}
+            <div
+                className={cn(
+                    "fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-all duration-100 md:hidden",
+                    isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+                onClick={onClose}
+            />
 
-            <nav style={{ flex: 1, padding: '1rem' }}>
-                <ul style={{ listStyle: 'none' }}>
-                    {navItems.map((item) => (
-                        <li key={item.path} style={{ marginBottom: '0.5rem' }}>
+            {/* Sidebar */}
+            <aside className={cn(
+                "fixed top-0 left-0 z-20 h-full w-72 border-r bg-card/50 backdrop-blur-xl transition-transform duration-300 md:translate-x-0",
+                isOpen ? "translate-x-0 z-50 pt-0" : "-translate-x-full"
+            )}>
+                <div className="flex h-16 items-center border-b px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    <div className="flex items-center gap-2 font-bold text-xl text-primary">
+                        <BookOpen className="h-6 w-6" />
+                        <span>TeacherPortal</span>
+                    </div>
+                </div>
+
+                <div className="flex flex-col h-[calc(100vh-4rem)] justify-between p-4">
+                    <nav className="space-y-2">
+                        {navItems.map((item) => (
                             <NavLink
+                                key={item.path}
                                 to={item.path}
                                 onClick={() => onClose && onClose()}
-                                style={({ isActive }) => ({
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '0.75rem 1rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                                    backgroundColor: isActive ? 'rgba(79, 70, 229, 0.05)' : 'transparent',
-                                    fontWeight: isActive ? 600 : 500,
-                                    transition: 'all 0.2s'
-                                })}
+                                className={({ isActive }) => cn(
+                                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:text-primary",
+                                    isActive
+                                        ? "bg-primary/10 text-primary"
+                                        : "text-muted-foreground hover:bg-muted"
+                                )}
                             >
-                                <item.icon size={20} style={{ marginRight: '0.75rem' }} />
+                                <item.icon className="h-5 w-5" />
                                 {item.label}
                             </NavLink>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
+                        ))}
+                    </nav>
 
-            <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)' }}>
-                <button
-                    onClick={toggleTheme}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        border: 'none',
-                        background: 'transparent',
-                        color: 'var(--color-text-muted)',
-                        cursor: 'pointer',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: '0.5rem',
-                        transition: 'background 0.2s'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                    {theme === 'light' ? (
-                        <>
-                            <Moon size={20} style={{ marginRight: '0.75rem' }} />
-                            Dark Mode
-                        </>
-                    ) : (
-                        <>
-                            <Sun size={20} style={{ marginRight: '0.75rem' }} />
-                            Light Mode
-                        </>
-                    )}
-                </button>
+                    <div className="space-y-4 border-t pt-4">
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-3"
+                            onClick={toggleTheme}
+                        >
+                            {theme === 'light' ? (
+                                <>
+                                    <Moon className="h-5 w-5" />
+                                    Dark Mode
+                                </>
+                            ) : (
+                                <>
+                                    <Sun className="h-5 w-5" />
+                                    Light Mode
+                                </>
+                            )}
+                        </Button>
 
-                <button
-                    onClick={signOut}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        border: 'none',
-                        background: 'transparent',
-                        color: 'var(--color-error)',
-                        cursor: 'pointer',
-                        borderRadius: 'var(--radius-md)',
-                        transition: 'background 0.2s'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                    <LogOut size={20} style={{ marginRight: '0.75rem' }} />
-                    Logout
-                </button>
-            </div>
-        </aside>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={signOut}
+                        >
+                            <LogOut className="h-5 w-5" />
+                            Logout
+                        </Button>
+                    </div>
+                </div>
+            </aside>
+        </>
     );
 };
 
 export default Sidebar;
+

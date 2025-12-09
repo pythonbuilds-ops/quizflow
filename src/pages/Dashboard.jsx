@@ -2,28 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { FileText, Users, Clock, Plus, ArrowRight } from 'lucide-react';
-
-const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: `${color}20`,
-            color: color,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-        }}>
-            <Icon size={24} />
-        </div>
-        <div>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', fontWeight: 500 }}>{title}</p>
-            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-text-main)' }}>{value}</p>
-        </div>
-    </div>
-);
+import { FileText, Users, Clock, Plus, ArrowRight, BarChart2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -33,11 +15,8 @@ const Dashboard = () => {
         totalQuestions: 0
     });
     const [recentTests, setRecentTests] = useState([]);
-
     const [teacherCode, setTeacherCode] = useState('...');
-    const { user } = useAuth(); // Get user from context
-
-    console.log('Dashboard rendering, user:', user);
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -45,15 +24,13 @@ const Dashboard = () => {
 
             try {
                 // 1. Fetch Teacher Code
-                const { data: teacherData, error: teacherError } = await supabase
+                const { data: teacherData } = await supabase
                     .from('teachers')
                     .select('teacher_code')
                     .eq('id', user.id)
                     .maybeSingle();
 
-                if (teacherData) {
-                    setTeacherCode(teacherData.teacher_code);
-                }
+                if (teacherData) setTeacherCode(teacherData.teacher_code);
 
                 // 2. Fetch Tests (Active only)
                 const { data: testsData, error: testsError } = await supabase
@@ -94,7 +71,6 @@ const Dashboard = () => {
                     totalQuestions: totalQs
                 });
 
-                // Recent tests (top 3)
                 setRecentTests(processedTests.slice(0, 3));
 
             } catch (error) {
@@ -106,105 +82,108 @@ const Dashboard = () => {
     }, [user]);
 
     const statCards = [
-        { title: 'Your Class Code', value: teacherCode, icon: Users, color: 'var(--color-primary)' },
-        { title: 'Active Tests', value: stats.activeTests, icon: Clock, color: 'var(--color-secondary)' },
-        { title: 'Total Tests', value: stats.totalTests, icon: FileText, color: 'var(--color-success)' },
+        { title: 'Your Class Code', value: teacherCode, icon: Users, color: 'text-primary' },
+        { title: 'Active Tests', value: stats.activeTests, icon: Clock, color: 'text-secondary-foreground' },
+        { title: 'Total Tests', value: stats.totalTests, icon: FileText, color: 'text-green-600' },
     ];
 
     return (
-        <div>
-            <div style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>Dashboard</h1>
-                <p style={{ color: 'var(--color-text-muted)' }}>Overview of your testing portal</p>
+        <div className="space-y-8">
+            <div>
+                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                <p className="text-muted-foreground">Overview of your testing portal</p>
             </div>
 
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '1.5rem',
-                marginBottom: '2rem'
-            }}>
+            <div className="grid gap-4 md:grid-cols-3">
                 {statCards.map((stat, index) => (
-                    <StatCard key={index} {...stat} />
+                    <Card key={index}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                                {stat.title}
+                            </CardTitle>
+                            <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stat.value}</div>
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                <div className="card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-text-main)' }}>Recent Tests</h2>
-                        <button
-                            className="btn btn-outline"
-                            style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem' }}
-                            onClick={() => navigate('/tests')}
-                        >
+            <div className="grid gap-4 md:grid-cols-7">
+                <Card className="col-span-4">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="space-y-1">
+                            <CardTitle>Recent Tests</CardTitle>
+                            <CardDescription>
+                                You have {stats.totalTests} total tests created.
+                            </CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/tests')}>
                             View All
-                        </button>
-                    </div>
-
-                    {recentTests.length === 0 ? (
-                        <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem' }}>No tests created yet.</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {recentTests.map((test) => (
-                                <div key={test.id} style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '1rem',
-                                    border: '1px solid var(--color-border)',
-                                    borderRadius: 'var(--radius-md)',
-                                    backgroundColor: 'var(--color-bg)',
-                                    flexWrap: 'wrap',
-                                    gap: '1rem'
-                                }}>
-                                    <div>
-                                        <h3 style={{ fontWeight: 600, marginBottom: '0.25rem', color: 'var(--color-text-main)' }}>{test.title}</h3>
-                                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                                            <span>{new Date(test.start_time).toLocaleDateString()}</span>
-                                            <span>•</span>
-                                            <span>{test.questions?.length || 0} Qs</span>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {recentTests.length === 0 ? (
+                            <p className="text-center text-muted-foreground py-8">No tests created yet.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {recentTests.map((test) => (
+                                    <div key={test.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
+                                        <div className="space-y-1">
+                                            <p className="font-semibold leading-none">{test.title}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {new Date(test.start_time).toLocaleDateString()} • {test.questions?.length || 0} Questions
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <Badge variant={test.status === 'Active' ? 'default' : 'secondary'}>
+                                                {test.status}
+                                            </Badge>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <span style={{
-                                            padding: '0.25rem 0.75rem',
-                                            borderRadius: 'var(--radius-full)',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                                            color: 'var(--color-primary)'
-                                        }}>
-                                            {test.status}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
-                <div className="card" style={{ height: 'fit-content' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'var(--color-text-main)' }}>Quick Actions</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <button
-                            className="btn btn-primary"
-                            style={{ width: '100%', justifyContent: 'space-between' }}
+                <Card className="col-span-3">
+                    <CardHeader>
+                        <CardTitle>Quick Actions</CardTitle>
+                        <CardDescription>
+                            Common tasks for managing your exams.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Button
+                            className="w-full justify-between group"
+                            size="lg"
                             onClick={() => navigate('/create-test')}
                         >
                             <span>Create New Test</span>
-                            <Plus size={20} />
-                        </button>
-                        <button
-                            className="btn btn-outline"
-                            style={{ width: '100%', justifyContent: 'space-between' }}
+                            <Plus className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="w-full justify-between group"
+                            size="lg"
                             onClick={() => navigate('/tests')}
                         >
                             <span>Manage Tests</span>
-                            <ArrowRight size={20} />
-                        </button>
-                    </div>
-                </div>
+                            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            className="w-full justify-between"
+                            size="lg"
+                            onClick={() => navigate('/tests')} // Analytics not separately routable yet in quick actions
+                        >
+                            <span>View Analytics</span>
+                            <BarChart2 className="h-4 w-4" />
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

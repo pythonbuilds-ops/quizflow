@@ -1,66 +1,57 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, X } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
+import { Button } from './ui/Button';
 
 const Layout = ({ children }) => {
     const { user } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-    const closeSidebar = () => setIsSidebarOpen(false);
-
     return (
-        <div className="app-layout">
-            {/* Mobile Nav Toggle */}
-            <button
-                className="mobile-nav-toggle"
-                onClick={toggleSidebar}
-                aria-label="Toggle Menu"
-            >
-                {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-
-            {/* Sidebar Overlay */}
-            <div
-                className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
-                onClick={closeSidebar}
+        <div className="min-h-screen bg-background">
+            <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
             />
 
-            <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
+            <div className="md:pl-72 flex flex-col min-h-screen transition-all duration-300">
+                {/* Header */}
+                <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="md:hidden -ml-2"
+                        onClick={() => setIsSidebarOpen(true)}
+                    >
+                        <Menu className="h-5 w-5" />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
 
-            <main className="main-content">
-                <header style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '2rem'
-                }}>
-                    <div>
-                        {/* Breadcrumbs or Page Title could go here */}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ textAlign: 'right', display: 'none', md: { display: 'block' } }} className="hidden md:block">
-                            <p style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{user?.name}</p>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Teacher</p>
+                    <div className="flex-1" />
+
+                    <div className="flex items-center gap-4">
+                        <div className="hidden text-right md:block">
+                            <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
+                            <p className="text-xs text-muted-foreground">Teacher</p>
                         </div>
-                        <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            backgroundColor: 'var(--color-primary)',
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 'bold'
-                        }}>
-                            {user?.name?.charAt(0)}
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            {user?.name ? (
+                                <span className="text-sm font-medium">{user.name.charAt(0)}</span>
+                            ) : (
+                                <User className="h-4 w-4" />
+                            )}
                         </div>
                     </div>
                 </header>
-                {children}
-            </main>
+
+                {/* Main Content */}
+                <main className="flex-1 p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="mx-auto max-w-6xl space-y-8">
+                        {children}
+                    </div>
+                </main>
+            </div>
         </div>
     );
 };

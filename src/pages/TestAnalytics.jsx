@@ -11,8 +11,12 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
-import { Trophy, Users, TrendingUp, ArrowLeft, ChevronDown, ChevronUp, X, CheckCircle, XCircle, Download } from 'lucide-react';
+import { Trophy, Users, TrendingUp, ArrowLeft, ChevronDown, ChevronUp, X, CheckCircle, XCircle, Download, User, Clock, Monitor } from 'lucide-react';
 import MathText from '../components/MathText';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
+import { cn } from '../lib/utils';
 
 const TestAnalytics = () => {
     const { testId } = useParams();
@@ -30,7 +34,6 @@ const TestAnalytics = () => {
 
     const fetchData = async () => {
         try {
-            // Fetch test details
             const { data: testData, error: testError } = await supabase
                 .from('tests')
                 .select('*')
@@ -39,7 +42,6 @@ const TestAnalytics = () => {
 
             if (testError) throw testError;
 
-            // Fetch submissions with student details
             const { data: submissionsData, error: submissionsError } = await supabase
                 .from('test_submissions')
                 .select('*, students(full_name, email)')
@@ -91,22 +93,19 @@ const TestAnalytics = () => {
     };
 
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-            <div style={{ width: '3rem', height: '3rem', border: '2px solid var(--color-primary)', borderBottomColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        <div className="flex items-center justify-center min-h-screen bg-background">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
     );
 
-    if (!test) return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-error)' }}>Test not found</div>;
+    if (!test) return <div className="p-8 text-center text-destructive font-medium">Test not found</div>;
 
-    // Calculate Statistics
     const totalStudents = submissions.length;
     const averageScore = totalStudents > 0
         ? submissions.reduce((acc, curr) => acc + curr.score, 0) / totalStudents
         : 0;
     const highestScore = totalStudents > 0 ? Math.max(...submissions.map(s => s.score)) : 0;
 
-    // Prepare Chart Data
     const scoreDistribution = [
         { name: '0-40%', count: submissions.filter(s => s.percentage < 40).length },
         { name: '40-60%', count: submissions.filter(s => s.percentage >= 40 && s.percentage < 60).length },
@@ -114,9 +113,7 @@ const TestAnalytics = () => {
         { name: '80-100%', count: submissions.filter(s => s.percentage >= 80).length },
     ];
 
-    // Item Analysis
     const itemAnalysis = Array.isArray(test.questions) ? test.questions.map((q, index) => {
-        // Count correct answers
         const correctCount = submissions.filter(s => {
             const studentAnswer = s.answers && s.answers[q.id];
             if (!studentAnswer) return false;
@@ -126,19 +123,16 @@ const TestAnalytics = () => {
                 return Math.abs(parseFloat(studentAnswer) - parseFloat(q.correctAnswer)) < 0.01;
             }
 
-            // Handle MCQ with partial marking
             const correctAnswers = String(q.correctAnswer).split(',').map(a => a.trim());
             const studentAnswers = String(studentAnswer).split(',').map(a => a.trim());
             const correctSelected = studentAnswers.filter(ans => correctAnswers.includes(ans));
             const wrongSelected = studentAnswers.filter(ans => !correctAnswers.includes(ans));
 
-            // Count as fully correct only if all correct and no wrong
             return wrongSelected.length === 0 && correctSelected.length === correctAnswers.length;
         }).length;
 
         const accuracy = totalStudents > 0 ? (correctCount / totalStudents) * 100 : 0;
 
-        // Option distribution by ID
         const optionsCount = {};
         if (q.options && Array.isArray(q.options)) {
             q.options.forEach(opt => optionsCount[opt.id] = 0);
@@ -166,11 +160,10 @@ const TestAnalytics = () => {
         };
     }) : [];
 
-    // Sort item analysis
     const sortedItemAnalysis = [...itemAnalysis].sort((a, b) => {
         if (sortBy === 'most-correct') return b.accuracy - a.accuracy;
         if (sortBy === 'most-incorrect') return a.accuracy - b.accuracy;
-        return a.questionNumber - b.questionNumber; // number
+        return a.questionNumber - b.questionNumber;
     });
 
     const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e'];
@@ -179,51 +172,41 @@ const TestAnalytics = () => {
         if (!student) return null;
 
         return (
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 50,
-                padding: '1rem'
-            }} onClick={onClose}>
-                <div className="card" style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'auto', padding: 0 }}
-                    onClick={(e) => e.stopPropagation()}>
-                    <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, backgroundColor: 'var(--color-surface)', zIndex: 10 }}>
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+                <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                    <CardHeader className="flex flex-row items-center justify-between border-b px-6 py-4 sticky top-0 bg-card z-10 shrink-0">
                         <div>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-text-main)', margin: 0 }}>
+                            <CardTitle className="flex items-center gap-2">
+                                <User className="w-5 h-5" />
                                 {student.students?.full_name || 'Unknown Student'}
-                            </h2>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-                                Score: {student.score}/{student.max_score} ({student.percentage.toFixed(1)}%)
-                            </p>
+                            </CardTitle>
+                            <CardDescription>
+                                Score: <span className={cn("font-bold", student.percentage >= 40 ? "text-green-600" : "text-red-600")}>
+                                    {student.score}/{student.max_score}
+                                </span> ({student.percentage.toFixed(1)}%)
+                            </CardDescription>
                         </div>
-                        <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                            <X size={24} />
-                        </button>
-                    </div>
+                        <Button variant="ghost" size="icon" onClick={onClose}>
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </CardHeader>
 
-                    <div style={{ padding: '1.5rem' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Q#</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Question</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Student Answer</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Result</th>
+                    <CardContent className="overflow-y-auto p-0 flex-1">
+                        <table className="w-full text-sm">
+                            <thead className="bg-muted text-muted-foreground sticky top-0">
+                                <tr>
+                                    <th className="px-6 py-3 text-left font-medium">Q#</th>
+                                    <th className="px-6 py-3 text-left font-medium min-w-[200px]">Question</th>
+                                    <th className="px-6 py-3 text-left font-medium">Student Answer</th>
+                                    <th className="px-6 py-3 text-center font-medium">Result</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-border">
                                 {test.questions.map((q, idx) => {
                                     const studentAnswer = student.answers[q.id];
                                     const isSkipped = !studentAnswer;
-
                                     let isCorrect = false;
+
                                     if (!isSkipped && q.correctAnswer) {
                                         if (q.type === 'integer') {
                                             isCorrect = Math.abs(parseFloat(studentAnswer) - parseFloat(q.correctAnswer)) < 0.01;
@@ -237,21 +220,23 @@ const TestAnalytics = () => {
                                     }
 
                                     return (
-                                        <tr key={q.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                            <td style={{ padding: '0.75rem', fontWeight: 500 }}>{idx + 1}</td>
-                                            <td style={{ padding: '0.75rem', fontSize: '0.875rem', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                <MathText text={q.question} />
+                                        <tr key={q.id} className="hover:bg-muted/30">
+                                            <td className="px-6 py-4 font-medium text-muted-foreground">{idx + 1}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="line-clamp-2 max-w-md">
+                                                    <MathText text={q.text || q.question} />
+                                                </div>
                                             </td>
-                                            <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
-                                                {studentAnswer || <span style={{ color: 'var(--color-text-muted)' }}>Not Answered</span>}
+                                            <td className="px-6 py-4 font-mono text-xs">
+                                                {studentAnswer || <span className="text-muted-foreground">-</span>}
                                             </td>
-                                            <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                                            <td className="px-6 py-4 text-center">
                                                 {isSkipped ? (
-                                                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>-</span>
+                                                    <span className="text-muted-foreground">-</span>
                                                 ) : isCorrect ? (
-                                                    <CheckCircle size={20} color="var(--color-success)" />
+                                                    <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
                                                 ) : (
-                                                    <XCircle size={20} color="var(--color-error)" />
+                                                    <XCircle className="w-5 h-5 text-destructive mx-auto" />
                                                 )}
                                             </td>
                                         </tr>
@@ -259,357 +244,256 @@ const TestAnalytics = () => {
                                 })}
                             </tbody>
                         </table>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
             </div>
         );
     };
 
     return (
-        <div style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
-            <div className="container" style={{ padding: '1.5rem', maxWidth: '100%', boxSizing: 'border-box' }}>
-                <style>{`
-                @media (min-width: 640px) {
-                    .analytics-container { padding: 3rem 1.5rem !important; }
-                }
-                .analytics-charts, .analytics-charts * { box-sizing: border-box !important; }
-                /* Fix: Ensure children don't overflow parent width */
-                .card, .analytics-charts > * { max-width: 100% !important; }
-            `}</style>
-                <div className="analytics-container" style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', padding: '0 0.5rem', boxSizing: 'border-box' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                            <button onClick={() => navigate('/dashboard')} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <ArrowLeft size={18} /> Back
-                            </button>
-                            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-text-main)', wordBreak: 'break-word', maxWidth: '100%' }}>{test.title} - Analytics</h1>
-                        </div>
-                        <button onClick={downloadCSV} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Download size={18} /> Download Results
-                        </button>
-                    </div>
-
-                    {/* Key Metrics */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-                        <div className="card">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                <div style={{ padding: '0.75rem', backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: 'var(--radius-md)' }}>
-                                    <Users size={24} />
-                                </div>
-                                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Total Attempts</span>
-                            </div>
-                            <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginTop: '0.5rem' }}>{totalStudents}</p>
-                        </div>
-
-                        <div className="card">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                <div style={{ padding: '0.75rem', backgroundColor: '#ecfdf5', color: '#059669', borderRadius: 'var(--radius-md)' }}>
-                                    <TrendingUp size={24} />
-                                </div>
-                                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Average Score</span>
-                            </div>
-                            <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginTop: '0.5rem' }}>{averageScore.toFixed(1)}</p>
-                        </div>
-
-                        <div className="card">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                <div style={{ padding: '0.75rem', backgroundColor: '#fffbeb', color: '#d97706', borderRadius: 'var(--radius-md)' }}>
-                                    <Trophy size={24} />
-                                </div>
-                                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Highest Score</span>
-                            </div>
-                            <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginTop: '0.5rem' }}>{highestScore}</p>
+        <div className="min-h-screen bg-muted/10 p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <Button variant="outline" onClick={() => navigate('/dashboard')} className="gap-2">
+                            <ArrowLeft className="w-4 h-4" /> Back
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight">{test.title}</h1>
+                            <p className="text-muted-foreground">Performance Overview & Analytics</p>
                         </div>
                     </div>
+                    <Button onClick={downloadCSV} className="gap-2 shadow-sm">
+                        <Download className="w-4 h-4" /> Download CSV
+                    </Button>
+                </div>
 
-                    {/* Charts Section */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', marginBottom: '3rem' }}>
-                        <style>{`
-                    @media (min-width: 768px) {
-                        .analytics-charts {
-                            grid-template-columns: repeat(2, 1fr) !important;
-                        }
-                        .item-analysis-row {
-                            flex-direction: row !important;
-                            align-items: center !important;
-                        }
-                        .item-analysis-meta {
-                            text-align: right !important;
-                            margin-top: 0 !important;
-                        }
-                    }
-                    @media (max-width: 767px) {
-                        .item-analysis-row {
-                            flex-direction: column !important;
-                            align-items: flex-start !important;
-                            gap: 0.75rem !important;
-                        }
-                        .item-analysis-meta {
-                            width: 100% !important;
-                            justify-content: space-between !important;
-                            margin-top: 0.5rem !important;
-                        }
-                    }
-                `}</style>
-                        <style>{`
-                    @media (min-width: 768px) {
-                        .analytics-charts {
-                            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                            max-width: 100% !important;
-                        }
-                    }
-                    @media (max-width: 767px) {
-                        .analytics-charts {
-                            display: flex !important;
-                            flex-direction: column !important;
-                            width: 100% !important;
-                        }
-                        .analytics-charts > * {
-                            width: 100% !important;
-                            max-width: 100% !important;
-                            margin-bottom: 1.5rem;
-                        }
-                    }
-                `}</style>
-                        <div className="analytics-charts" style={{ width: '100%', overflow: 'hidden' }}>
-                            <div className="card" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
-                                <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '1.5rem' }}>Score Distribution</h3>
-                                <div style={{ height: '20rem', width: '100%', minWidth: '100%', maxWidth: '100%', overflowX: 'auto' }}>
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                                        <BarChart data={scoreDistribution}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                                            <Tooltip
-                                                cursor={{ fill: '#f9fafb' }}
-                                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                            />
-                                            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                                                {scoreDistribution.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
+                {/* Key Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Attempts</CardTitle>
+                            <Users className="h-4 w-4 text-blue-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{totalStudents}</div>
+                            <p className="text-xs text-muted-foreground">Students submitted</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Average Score</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-emerald-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{averageScore.toFixed(1)}</div>
+                            <p className="text-xs text-muted-foreground">Out of {test.questions.length * 4}</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Highest Score</CardTitle>
+                            <Trophy className="h-4 w-4 text-amber-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{highestScore}</div>
+                            <p className="text-xs text-muted-foreground">Top performer metric</p>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                            <div className="card" style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
-                                <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '1.5rem' }}>Leaderboard</h3>
-                                <div style={{ overflowX: 'auto', flex: 1, paddingRight: '0.5rem', width: '100%', maxWidth: '100%' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '500px' }}>
-                                        <thead>
-                                            <tr style={{ borderBottom: '1px solid var(--color-border)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                <th style={{ padding: '0.75rem 1rem' }}>Rank</th>
-                                                <th style={{ padding: '0.75rem 1rem' }}>Student</th>
-                                                <th style={{ padding: '0.75rem 1rem' }}>Score</th>
-                                                <th style={{ padding: '0.75rem 1rem' }}>Time</th>
-                                                <th style={{ padding: '0.75rem 1rem' }}>Tab Switches</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {submissions.slice(0, 10).map((sub, idx) => (
-                                                <tr
-                                                    key={sub.id}
-                                                    style={{ borderBottom: '1px solid var(--color-bg)', transition: 'background-color 0.2s', cursor: 'pointer' }}
-                                                    onClick={() => setSelectedStudent(sub)}
-                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
-                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                >
-                                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                                        {idx < 3 ? (
-                                                            <span style={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                width: '1.5rem',
-                                                                height: '1.5rem',
-                                                                borderRadius: '50%',
-                                                                fontSize: '0.75rem',
-                                                                fontWeight: 'bold',
-                                                                color: 'white',
-                                                                backgroundColor: idx === 0 ? '#facc15' : idx === 1 ? '#9ca3af' : '#d97706'
-                                                            }}>
-                                                                {idx + 1}
-                                                            </span>
-                                                        ) : (
-                                                            <span style={{ color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}>{idx + 1}</span>
-                                                        )}
-                                                    </td>
-                                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                                        <span style={{ fontWeight: 500, color: 'var(--color-text-main)' }}>{sub.students?.full_name || 'Unknown'}</span>
-                                                    </td>
-                                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                                        <span style={{ fontWeight: 600, color: sub.percentage >= 40 ? 'var(--color-success)' : 'var(--color-error)' }}>
-                                                            {sub.score} <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', fontWeight: 400 }}>/ {test.questions.length * 4}</span>
-                                                        </span>
-                                                    </td>
-                                                    <td style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                                                        {Math.floor(sub.time_taken / 60)}m {sub.time_taken % 60}s
-                                                    </td>
-                                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                                        <span style={{
-                                                            fontSize: '0.875rem',
-                                                            fontWeight: 600,
-                                                            color: sub.tab_switches > 5 ? 'var(--color-error)' : sub.tab_switches > 0 ? '#f59e0b' : 'var(--color-success)'
-                                                        }}>
-                                                            {sub.tab_switches || 0}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Score Distribution Chart */}
+                    <Card className="col-span-1">
+                        <CardHeader>
+                            <CardTitle>Score Distribution</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px] w-full min-w-0 p-4" style={{ width: '100%', height: 300 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={scoreDistribution} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                                    />
+                                    <Tooltip
+                                        cursor={{ fill: 'hsl(var(--muted)/0.5)' }}
+                                        contentStyle={{
+                                            borderRadius: '8px',
+                                            border: '1px solid hsl(var(--border))',
+                                            backgroundColor: 'hsl(var(--card))',
+                                            color: 'hsl(var(--foreground))',
+                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                        }}
+                                    />
+                                    <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                                        {scoreDistribution.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
 
-                        {/* Question Analysis */}
-                        <div className="card">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--color-text-main)' }}>Question Analysis</h3>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button
-                                        onClick={() => setSortBy('number')}
-                                        className={sortBy === 'number' ? 'btn btn-primary' : 'btn btn-outline'}
-                                        style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                                    >
-                                        By Number
-                                    </button>
-                                    <button
-                                        onClick={() => setSortBy('most-correct')}
-                                        className={sortBy === 'most-correct' ? 'btn' : 'btn btn-outline'}
-                                        style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', backgroundColor: sortBy === 'most-correct' ? 'var(--color-success)' : undefined, color: sortBy === 'most-correct' ? 'white' : undefined }}
-                                    >
-                                        Most Correct
-                                    </button>
-                                    <button
-                                        onClick={() => setSortBy('most-incorrect')}
-                                        className={sortBy === 'most-incorrect' ? 'btn' : 'btn btn-outline'}
-                                        style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', backgroundColor: sortBy === 'most-incorrect' ? 'var(--color-error)' : undefined, color: sortBy === 'most-incorrect' ? 'white' : undefined }}
-                                    >
-                                        Most Incorrect
-                                    </button>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {sortedItemAnalysis.map((item) => (
-                                    <div key={item.id} style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                                        <div
-                                            onClick={() => setSelectedQuestion(selectedQuestion === item.id ? null : item.id)}
-                                            style={{
-                                                padding: '1rem',
-                                                backgroundColor: 'var(--color-surface)',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                transition: 'background-color 0.2s',
-                                                width: '100%'
-                                            }}
-                                            className="item-analysis-row"
+                    {/* Leaderboard */}
+                    <Card className="col-span-1 flex flex-col">
+                        <CardHeader>
+                            <CardTitle>Leaderboard</CardTitle>
+                            <CardDescription>Top performing students</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 overflow-y-auto max-h-[300px]">
+                            <table className="w-full text-sm">
+                                <thead className="bg-muted/50 sticky top-0 backdrop-blur-sm">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left font-medium w-16">Rank</th>
+                                        <th className="px-4 py-3 text-left font-medium">Student</th>
+                                        <th className="px-4 py-3 text-right font-medium">Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {submissions.slice(0, 10).map((sub, idx) => (
+                                        <tr
+                                            key={sub.id}
+                                            onClick={() => setSelectedStudent(sub)}
+                                            className="hover:bg-muted/30 cursor-pointer transition-colors"
                                         >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, width: '100%' }}>
-                                                <span style={{
-                                                    fontWeight: 'bold',
-                                                    fontSize: '0.875rem',
-                                                    padding: '0.25rem 0.5rem',
-                                                    borderRadius: 'var(--radius-sm)',
-                                                    backgroundColor: item.accuracy > 70 ? '#ecfdf5' : item.accuracy > 40 ? '#fffbeb' : '#fef2f2',
-                                                    color: item.accuracy > 70 ? '#059669' : item.accuracy > 40 ? '#d97706' : '#dc2626',
-                                                    flexShrink: 0
-                                                }}>
-                                                    Q{item.questionNumber}
+                                            <td className="px-4 py-3">
+                                                {idx < 3 ? (
+                                                    <span className={cn(
+                                                        "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white",
+                                                        idx === 0 ? "bg-yellow-500" : idx === 1 ? "bg-slate-400" : "bg-amber-600"
+                                                    )}>
+                                                        {idx + 1}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted-foreground ml-1.5">{idx + 1}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 font-medium">{sub.students?.full_name || 'Unknown'}</td>
+                                            <td className="px-4 py-3 text-right">
+                                                <span className={cn("font-bold", sub.percentage >= 40 ? "text-green-600" : "text-red-600")}>
+                                                    {sub.score}
                                                 </span>
-                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                    <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
-                                                        {item.type || 'MCQ'}
-                                                    </span>
-                                                    <span style={{ color: 'var(--color-text-main)', fontWeight: 500, wordBreak: 'break-word', fontSize: '0.9rem' }}>
-                                                        <MathText text={item.text || item.question} />
-                                                    </span>
-                                                </div>
-                                            </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                                            <div className="item-analysis-meta" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                                                <div>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accuracy</span>
-                                                    <span style={{ fontWeight: 'bold', color: 'var(--color-text-main)' }}>{item.accuracy.toFixed(1)}%</span>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>({item.correctCount}/{totalStudents})</span>
-                                                </div>
-                                                {selectedQuestion === item.id ? <ChevronUp size={20} style={{ color: 'var(--color-text-muted)' }} /> : <ChevronDown size={20} style={{ color: 'var(--color-text-muted)' }} />}
+                {/* Question Analysis */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+                        <CardTitle>Question Analysis</CardTitle>
+                        <div className="flex gap-2">
+                            <Button variant={sortBy === 'number' ? 'default' : 'outline'} size="sm" onClick={() => setSortBy('number')}>By Number</Button>
+                            <Button variant={sortBy === 'most-correct' ? 'default' : 'outline'} size="sm" onClick={() => setSortBy('most-correct')} className={sortBy === 'most-correct' ? "bg-green-600 hover:bg-green-700" : ""}>Most Correct</Button>
+                            <Button variant={sortBy === 'most-incorrect' ? 'default' : 'outline'} size="sm" onClick={() => setSortBy('most-incorrect')} className={sortBy === 'most-incorrect' ? "bg-red-600 hover:bg-red-700" : ""}>Most Incorrect</Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {sortedItemAnalysis.map((item) => (
+                            <div key={item.id} className="border rounded-lg overflow-hidden bg-card">
+                                <div
+                                    onClick={() => setSelectedQuestion(selectedQuestion === item.id ? null : item.id)}
+                                    className="p-4 flex items-center gap-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                                >
+                                    <Badge variant="outline" className={cn(
+                                        "w-12 h-8 flex items-center justify-center font-bold",
+                                        item.accuracy > 70 ? "bg-green-50 text-green-700 border-green-200" : item.accuracy > 40 ? "bg-yellow-50 text-yellow-700 border-yellow-200" : "bg-red-50 text-red-700 border-red-200"
+                                    )}>
+                                        Q{item.questionNumber}
+                                    </Badge>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="line-clamp-1 font-medium text-sm">
+                                            <MathText text={item.text || item.question} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-6 text-sm">
+                                        <div className="text-right">
+                                            <span className="block text-xs text-muted-foreground uppercase tracking-wider font-semibold">Accuracy</span>
+                                            <span className="font-bold">{item.accuracy.toFixed(1)}%</span>
+                                        </div>
+                                        {selectedQuestion === item.id ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+                                    </div>
+                                </div>
+
+                                {selectedQuestion === item.id && (
+                                    <div className="bg-muted/10 border-t p-6 animate-in slide-in-from-top-2 duration-200">
+                                        {item.passage && (
+                                            <div className="mb-6 p-4 bg-muted/40 rounded-lg border-l-4 border-primary">
+                                                <span className="text-xs font-bold text-primary uppercase tracking-wider block mb-2">Passage</span>
+                                                <p className="text-sm leading-relaxed">{item.passage}</p>
                                             </div>
+                                        )}
+
+                                        <div className="mb-6">
+                                            <h4 className="text-sm font-semibold mb-2">Full Question</h4>
+                                            <div className="p-4 bg-muted/20 rounded-lg border text-sm">
+                                                <MathText text={item.text || item.question} />
+                                            </div>
+                                            {item.image && <img src={item.image} alt="Question" className="mt-4 max-h-64 rounded-lg border" />}
                                         </div>
 
-                                        {selectedQuestion === item.id && (
-                                            <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
-                                                {/* Passage for Comprehension */}
-                                                {item.passage && (
-                                                    <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f0f9ff', borderLeft: '4px solid var(--color-primary)', borderRadius: 'var(--radius-md)' }}>
-                                                        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Passage</p>
-                                                        <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>{item.passage}</p>
-                                                    </div>
-                                                )}
-
-                                                <div style={{ marginBottom: '1.5rem' }}>
-                                                    <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>Question Text</p>
-                                                    <div style={{ backgroundColor: 'var(--color-surface)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', color: 'var(--color-text-main)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                                                        <MathText text={item.text || item.question} />
-                                                    </div>
-                                                    {item.image && <img src={item.image} alt="Question" style={{ marginTop: '1rem', maxWidth: '100%', maxHeight: '24rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }} />}
+                                        {item.type === 'integer' ? (
+                                            <div>
+                                                <h4 className="text-sm font-semibold mb-2">Correct Answer</h4>
+                                                <div className="inline-block px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-md font-mono font-bold">
+                                                    {item.correctAnswer}
                                                 </div>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <h4 className="text-sm font-semibold mb-3">Response Distribution</h4>
+                                                <div className="space-y-3">
+                                                    {item.options?.map((opt, idx) => {
+                                                        const count = item.optionsCount[opt.id] || 0;
+                                                        const percentage = totalStudents > 0 ? (count / totalStudents) * 100 : 0;
+                                                        const isCorrect = opt.id === item.correctAnswer;
 
-                                                {item.type === 'integer' ? (
-                                                    <div>
-                                                        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '0.75rem' }}>Correct Answer</p>
-                                                        <div style={{ padding: '1rem', backgroundColor: '#ecfdf5', borderRadius: 'var(--radius-md)', border: '1px solid #059669' }}>
-                                                            <span style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#059669' }}>{item.correctAnswer}</span>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div>
-                                                        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '0.75rem' }}>Response Distribution</p>
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                                            {item.options?.map((opt, idx) => {
-                                                                const count = item.optionsCount[opt.id] || 0;
-                                                                const percentage = totalStudents > 0 ? (count / totalStudents) * 100 : 0;
-                                                                const isCorrect = opt.id === item.correctAnswer;
-
-                                                                return (
-                                                                    <div key={idx} style={{ position: 'relative' }}>
-                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
-                                                                            <span style={{ fontWeight: 500, color: isCorrect ? 'var(--color-success)' : 'var(--color-text-main)' }}>
-                                                                                <MathText text={opt.text} /> {isCorrect && '(Correct Answer)'}
-                                                                            </span>
-                                                                            <span style={{ color: 'var(--color-text-muted)' }}>{count} students ({percentage.toFixed(1)}%)</span>
-                                                                        </div>
-                                                                        <div style={{ height: '0.5rem', backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-                                                                            <div
-                                                                                style={{
-                                                                                    height: '100%',
-                                                                                    transition: 'width 0.5s',
-                                                                                    backgroundColor: isCorrect ? 'var(--color-success)' : 'var(--color-text-muted)',
-                                                                                    width: `${percentage}%`
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                        return (
+                                                            <div key={idx}>
+                                                                <div className="flex justify-between text-sm mb-1">
+                                                                    <span className={cn("font-medium flex items-center gap-2", isCorrect && "text-green-600")}>
+                                                                        <span className="w-6 h-6 flex items-center justify-center rounded border bg-background text-xs">{opt.id}</span>
+                                                                        {isCorrect && <CheckCircle className="w-3 h-3" />}
+                                                                    </span>
+                                                                    <span className="text-muted-foreground">{count} students ({percentage.toFixed(1)}%)</span>
+                                                                </div>
+                                                                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={cn("h-full transition-all duration-500", isCorrect ? "bg-green-500" : "bg-muted-foreground/30")}
+                                                                        style={{ width: `${percentage}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        </div>
-                    </div>
-
-                    {selectedStudent && (
-                        <StudentDetailModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />
-                    )}
-                </div>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
+            {selectedStudent && <StudentDetailModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />}
         </div>
     );
 };

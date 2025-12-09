@@ -13,11 +13,13 @@ import MyTests from './pages/MyTests';
 import TestPreview from './pages/TestPreview';
 import TestAnalytics from './pages/TestAnalytics';
 import Settings from './pages/Settings';
+import Students from './pages/Students';
 import StudentDashboard from './pages/student/StudentDashboard';
 import TakeTest from './pages/student/TakeTest';
 import TestResult from './pages/student/TestResult';
 import StudentTestAnalysis from './pages/student/StudentTestAnalysis';
 import CalculatingResults from './pages/student/CalculatingResults';
+import StudentSettings from './pages/student/StudentSettings';
 import StudentLayout from './components/StudentLayout';
 
 function App() {
@@ -92,6 +94,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/students"
+              element={
+                <ProtectedRoute role="teacher">
+                  <Layout>
+                    <Students />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Student Routes */}
             <Route
@@ -133,6 +145,16 @@ function App() {
               element={
                 <ProtectedRoute role="student">
                   <StudentTestAnalysis />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/settings"
+              element={
+                <ProtectedRoute role="student">
+                  <StudentLayout>
+                    <StudentSettings />
+                  </StudentLayout>
                 </ProtectedRoute>
               }
             />

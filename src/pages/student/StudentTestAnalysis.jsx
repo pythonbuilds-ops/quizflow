@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, BarChart2, Download } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, BarChart2, Download, FileText } from 'lucide-react';
 import MathText from '../../components/MathText';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { cn } from '../../lib/utils';
 
 const StudentTestAnalysis = () => {
     const { testId } = useParams();
@@ -209,125 +213,136 @@ const StudentTestAnalysis = () => {
 
 
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-            <div style={{ width: '2rem', height: '2rem', border: '2px solid var(--color-primary)', borderBottomColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        <div className="flex items-center justify-center min-h-screen bg-background">
+            <div className="animate-pulse flex flex-col items-center gap-4">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="text-muted-foreground font-medium">Loading analysis...</p>
+            </div>
         </div>
     );
 
     if (!test || !submission) return null;
 
     return (
-        <div className="container" style={{ padding: '1rem', md: { padding: '2rem' }, maxWidth: '1200px' }}>
-            <style>{`
-                @media (min-width: 768px) {
-                    .container { padding: 2rem !important; }
-                }
-            `}</style>
-            <button
-                onClick={() => navigate(`/student/result/${testId}`)}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: 'var(--color-text-muted)',
-                    background: 'none',
-                    border: 'none',
-                    marginBottom: '2rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    padding: 0
-                }}
-            >
-                <ArrowLeft size={16} style={{ marginRight: '0.5rem' }} />
-                Back to Result
-            </button>
-
-            <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>
-                        Detailed Analysis: {test.title}
-                    </h1>
-                    <p style={{ color: 'var(--color-text-muted)' }}>
-                        Review your answers and time management per question.
-                    </p>
-                </div>
-                <button
-                    onClick={handleDownloadPaper}
-                    className="btn btn-outline"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', minWidth: 'fit-content' }}
+        <div className="min-h-screen bg-muted/10 p-4 md:p-8">
+            <div className="max-w-6xl mx-auto space-y-6">
+                <Button
+                    variant="ghost"
+                    onClick={() => navigate(`/student/result/${testId}`)}
+                    className="gap-2 text-muted-foreground hover:text-foreground pl-0 hover:bg-transparent"
                 >
-                    <Download size={16} />
-                    Download Paper
-                </button>
-            </div>
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Result
+                </Button>
 
-            <div className="card" style={{ overflow: 'hidden' }}>
-                <div className="overflow-x-auto" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '2px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
-                                <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Q#</th>
-                                <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)', width: '40%' }}>Question</th>
-                                <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Your Answer</th>
-                                <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Correct Answer</th>
-                                <th style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Result</th>
-                                <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Your Time</th>
-                                <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Avg Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {test.questions.map((q, idx) => {
-                                const studentAnswer = submission.answers[q.id];
-                                const isCorrect = checkAnswer(q, studentAnswer);
-                                const isSkipped = !studentAnswer;
-                                const timeSpent = submission.time_per_question ? submission.time_per_question[q.id] : 0;
-                                const avgTime = avgTimePerQuestion[q.id] || 0;
-
-                                return (
-                                    <tr key={q.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                        <td style={{ padding: '1rem', fontWeight: 500 }}>{idx + 1}</td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div style={{ fontSize: '0.9rem', color: 'var(--color-text-main)', marginBottom: '0.25rem', maxHeight: '3rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                                                <MathText text={q.text} />
-                                            </div>
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', backgroundColor: 'var(--color-bg)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                                                {q.type || 'MCQ'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '1rem', fontSize: '0.9rem', fontFamily: 'monospace' }}>
-                                            {studentAnswer || <span style={{ color: 'var(--color-text-muted)' }}>-</span>}
-                                        </td>
-                                        <td style={{ padding: '1rem', fontSize: '0.9rem', fontFamily: 'monospace', color: 'var(--color-success)', fontWeight: 500 }}>
-                                            {q.correctAnswer}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            {isSkipped ? (
-                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-                                                    <AlertCircle size={16} /> Skipped
-                                                </span>
-                                            ) : isCorrect ? (
-                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-success)', fontSize: '0.875rem', fontWeight: 500 }}>
-                                                    <CheckCircle size={16} /> Correct
-                                                </span>
-                                            ) : (
-                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-error)', fontSize: '0.875rem', fontWeight: 500 }}>
-                                                    <XCircle size={16} /> Wrong
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right', fontFamily: 'monospace', fontSize: '0.9rem', color: timeSpent > avgTime * 1.5 ? 'var(--color-error)' : 'var(--color-text-main)' }}>
-                                            {formatTime(timeSpent)}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right', fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                                            {formatTime(avgTime)}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+                            <span className="p-2 bg-primary/10 rounded-lg">
+                                <FileText className="w-8 h-8 text-primary" />
+                            </span>
+                            {test.title}
+                        </h1>
+                        <p className="text-muted-foreground mt-1 ml-14">
+                            Detailed performance analysis and time management review.
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        onClick={handleDownloadPaper}
+                        className="gap-2 shrink-0 shadow-sm"
+                    >
+                        <Download className="w-4 h-4" />
+                        Download PDF
+                    </Button>
                 </div>
+
+                <Card className="border-none shadow-md overflow-hidden">
+                    <CardHeader className="bg-card border-b px-6 py-4">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <BarChart2 className="w-5 h-5 text-primary" />
+                            Question Breakdown
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-semibold">
+                                    <tr>
+                                        <th className="px-6 py-4 w-16">Q#</th>
+                                        <th className="px-6 py-4 min-w-[300px]">Question</th>
+                                        <th className="px-6 py-4 w-32">Your Ans</th>
+                                        <th className="px-6 py-4 w-32">Correct</th>
+                                        <th className="px-6 py-4 text-center w-32">Result</th>
+                                        <th className="px-6 py-4 text-right w-32">Your Time</th>
+                                        <th className="px-6 py-4 text-right w-32">Avg Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border bg-card">
+                                    {test.questions.map((q, idx) => {
+                                        const studentAnswer = submission.answers[q.id];
+                                        const isCorrect = checkAnswer(q, studentAnswer);
+                                        const isSkipped = !studentAnswer;
+                                        const timeSpent = submission.time_per_question ? submission.time_per_question[q.id] : 0;
+                                        const avgTime = avgTimePerQuestion[q.id] || 0;
+
+                                        return (
+                                            <tr key={q.id} className="hover:bg-muted/30 transition-colors group">
+                                                <td className="px-6 py-4 font-medium text-muted-foreground">{idx + 1}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="line-clamp-2 text-sm font-medium mb-1.5 group-hover:line-clamp-none transition-all">
+                                                        <MathText text={q.text} />
+                                                    </div>
+                                                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground bg-muted/50 border-muted">
+                                                        {q.type || 'MCQ'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {studentAnswer ? (
+                                                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono break-all">
+                                                            {studentAnswer}
+                                                        </code>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono text-green-700 dark:text-green-400 break-all">
+                                                        {q.correctAnswer}
+                                                    </code>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    {isSkipped ? (
+                                                        <Badge variant="secondary" className="gap-1 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400">
+                                                            <AlertCircle className="w-3 h-3" /> Skipped
+                                                        </Badge>
+                                                    ) : isCorrect ? (
+                                                        <Badge className="gap-1 bg-green-100 text-green-700 hover:bg-green-200 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
+                                                            <CheckCircle className="w-3 h-3" /> Correct
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="destructive" className="gap-1 bg-red-100 text-red-700 hover:bg-red-200 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800">
+                                                            <XCircle className="w-3 h-3" /> Wrong
+                                                        </Badge>
+                                                    )}
+                                                </td>
+                                                <td className={cn(
+                                                    "px-6 py-4 text-right font-mono text-xs",
+                                                    timeSpent > avgTime * 1.5 ? "text-red-600 font-bold" : "text-muted-foreground"
+                                                )}>
+                                                    {formatTime(timeSpent)}
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-mono text-xs text-muted-foreground">
+                                                    {formatTime(avgTime)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

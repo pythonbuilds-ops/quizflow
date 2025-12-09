@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import MathText from '../components/MathText';
-import { ArrowLeft, Clock, CheckCircle, Layout, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Layout, ChevronLeft, ChevronRight, AlertCircle, X } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
+import { cn } from '../lib/utils';
 
 const TestPreview = () => {
     const { id } = useParams();
@@ -37,15 +41,14 @@ const TestPreview = () => {
 
     if (loading || !test) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
-                <div style={{ width: '3rem', height: '3rem', border: '3px solid var(--color-primary)', borderBottomColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            <div className="flex items-center justify-center min-h-screen bg-background">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
             </div>
         );
     }
 
     const currentQuestion = test.questions[currentQuestionIndex];
-    if (!currentQuestion) return <div>Error loading question.</div>;
+    if (!currentQuestion) return <div className="p-8 text-center text-destructive">Error loading question.</div>;
 
     const sections = [...new Set(test.questions.map(q => q.section || 'General'))];
     const groupedQuestions = sections.reduce((acc, section) => {
@@ -55,7 +58,6 @@ const TestPreview = () => {
         return acc;
     }, {});
 
-    // Helper to determine if an option is correct
     const isOptionCorrect = (q, optId) => {
         if (!q.correctAnswer) return false;
         const correctAnswers = q.correctAnswer.toString().split(',').map(a => a.trim());
@@ -63,152 +65,61 @@ const TestPreview = () => {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: 'var(--color-bg)', overflow: 'hidden', fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
-            <style>{`
-                @media (max-width: 1023px) {
-                    .mobile-palette-show { transform: translateX(0) !important; }
-                    .mobile-palette-hide { transform: translateX(100%) !important; }
-                }
-                @media (min-width: 1024px) {
-                    .desktop-palette { position: relative !important; transform: none !important; }
-                }
-                .option-card:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                    border-color: var(--color-primary);
-                }
-                .nav-btn:hover:not(:disabled) {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                }
-                /* Custom verify scrollbar */
-                ::-webkit-scrollbar { width: 8px; height: 8px; }
-                ::-webkit-scrollbar-track { background: transparent; }
-                ::-webkit-scrollbar-thumb { background: var(--color-border); borderRadius: 4px; }
-                ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
-            `}</style>
-
+        <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
             {/* Header */}
-            <header style={{
-                backgroundColor: 'var(--color-surface)',
-                borderBottom: '1px solid var(--color-border)',
-                height: '64px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0 1.5rem',
-                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                zIndex: 30,
-                flexShrink: 0
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button
-                        onClick={() => navigate('/tests')}
-                        className="btn btn-ghost"
-                        style={{
-                            padding: '0.5rem',
-                            borderRadius: '0.5rem',
-                            color: 'var(--color-text-muted)',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
+            <header className="h-16 border-b bg-card flex items-center justify-between px-4 sm:px-6 shadow-sm z-30 shrink-0">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/tests')}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
                     <div>
-                        <h1 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--color-text-main)', margin: 0, lineHeight: 1.2 }}>{test.title}</h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.125rem' }}>
-                            <span style={{
-                                fontSize: '0.65rem',
-                                color: 'var(--color-primary)',
-                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                                padding: '0.125rem 0.5rem',
-                                borderRadius: '9999px',
-                                textTransform: 'uppercase',
-                                fontWeight: 700,
-                                letterSpacing: '0.05em'
-                            }}>
-                                Preview Mode
-                            </span>
-                        </div>
+                        <h1 className="text-lg font-bold leading-tight">{test.title}</h1>
+                        <Badge variant="secondary" className="text-[10px] px-2 py-0 h-5 font-bold uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border-primary/20">
+                            Preview Mode
+                        </Badge>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div className="hidden lg:flex" style={{
-                        display: 'none',
-                        '@media (min-width: 1024px)': { display: 'flex' },
-                        alignItems: 'center',
-                        gap: '1.5rem',
-                        padding: '0.5rem 1.25rem',
-                        backgroundColor: 'var(--color-bg)',
-                        borderRadius: '0.75rem',
-                        border: '1px solid var(--color-border)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Clock size={16} className="text-gray-400" />
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{test.duration} mins</span>
+                <div className="flex items-center gap-4">
+                    <div className="hidden lg:flex items-center gap-6 px-4 py-2 bg-muted/50 rounded-lg border">
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-semibold">{test.duration} mins</span>
                         </div>
-                        <div style={{ width: '1px', height: '1.25rem', backgroundColor: 'var(--color-border)' }}></div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Total Marks: <span style={{ color: 'var(--color-primary)' }}>{test.total_marks || test.questions.length * 4}</span></span>
-                        </div>
+                        <div className="w-px h-4 bg-border" />
+                        <span className="text-sm font-semibold">
+                            Total Marks: <span className="text-primary">{test.total_marks || test.questions.length * 4}</span>
+                        </span>
                     </div>
 
-                    <button
-                        className="btn btn-outline lg:hidden"
-                        onClick={() => setShowPalette(!showPalette)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem' }}
-                    >
-                        <Layout size={18} />
-                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Palette</span>
-                    </button>
+                    <Button variant="outline" size="sm" className="lg:hidden gap-2" onClick={() => setShowPalette(!showPalette)}>
+                        <Layout className="w-4 h-4" />
+                        Palette
+                    </Button>
                 </div>
             </header>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+            <div className="flex flex-1 overflow-hidden relative">
                 {/* Sidebar / Question Palette */}
-                <aside
-                    className={`${showPalette ? 'mobile-palette-show' : 'mobile-palette-hide'} desktop-palette`}
-                    style={{
-                        position: 'fixed',
-                        top: '64px',
-                        right: 0,
-                        bottom: 0,
-                        width: '320px',
-                        backgroundColor: 'var(--color-surface)',
-                        borderLeft: '1px solid var(--color-border)',
-                        transform: 'translateX(100%)',
-                        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        zIndex: 40,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        boxShadow: '-4px 0 16px rgba(0,0,0,0.05)',
-                        '@media (min-width: 1024px)': {
-                            position: 'relative',
-                            top: 0,
-                            width: '300px',
-                            transform: 'none',
-                            boxShadow: 'none'
-                        }
-                    }}
-                >
-                    <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <h3 style={{ fontWeight: '700', color: 'var(--color-text-main)', margin: 0, fontSize: '1rem' }}>Question Palette</h3>
-                        <button onClick={() => setShowPalette(false)} className="lg:hidden" style={{ padding: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                            ✕
-                        </button>
+                <aside className={cn(
+                    "fixed inset-y-0 right-0 top-16 w-80 bg-card border-l transform transition-transform duration-300 ease-in-out z-40 flex flex-col shadow-2xl lg:relative lg:top-0 lg:transform-none lg:shadow-none lg:w-72",
+                    showPalette ? "translate-x-0" : "translate-x-full lg:translate-x-0"
+                )}>
+                    <div className="p-4 border-b flex items-center justify-between bg-muted/30">
+                        <h3 className="font-bold text-sm">Question Palette</h3>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={() => setShowPalette(false)}>
+                            <X className="w-4 h-4" />
+                        </Button>
                     </div>
 
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
                         {sections.map(section => (
-                            <div key={section} style={{ marginBottom: '2rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                                    <h4 style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                                        {section}
-                                    </h4>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{groupedQuestions[section].length} Qs</span>
+                            <div key={section}>
+                                <div className="flex items-center justify-between mb-3 pb-2 border-b">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{section}</h4>
+                                    <span className="text-xs text-muted-foreground">{groupedQuestions[section].length} Qs</span>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.75rem' }}>
+                                <div className="grid grid-cols-5 gap-2">
                                     {groupedQuestions[section].map((q) => (
                                         <button
                                             key={q.originalIndex}
@@ -216,24 +127,12 @@ const TestPreview = () => {
                                                 setCurrentQuestionIndex(q.originalIndex);
                                                 setShowPalette(false);
                                             }}
-                                            style={{
-                                                width: '100%',
-                                                aspectRatio: '1',
-                                                borderRadius: '0.5rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '0.875rem',
-                                                fontWeight: 600,
-                                                border: currentQuestionIndex === q.originalIndex ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
-                                                backgroundColor: currentQuestionIndex === q.originalIndex ? 'var(--color-primary)' : 'var(--color-bg)',
-                                                color: currentQuestionIndex === q.originalIndex ? 'white' : 'var(--color-text-main)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                outline: 'none',
-                                                boxShadow: currentQuestionIndex === q.originalIndex ? '0 4px 6px -1px rgba(37, 99, 235, 0.2)' : 'none'
-                                            }}
-                                            className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                                            className={cn(
+                                                "w-full aspect-square rounded-md flex items-center justify-center text-sm font-bold transition-all ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                                currentQuestionIndex === q.originalIndex
+                                                    ? "bg-primary text-primary-foreground shadow-md scale-105"
+                                                    : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                                            )}
                                         >
                                             {q.originalIndex + 1}
                                         </button>
@@ -242,261 +141,145 @@ const TestPreview = () => {
                             </div>
                         ))}
                     </div>
-
-                    <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ width: '0.75rem', height: '0.75rem', backgroundColor: 'var(--color-primary)', borderRadius: '0.25rem' }}></div>
-                                <span style={{ fontWeight: 500 }}>Current</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ width: '0.75rem', height: '0.75rem', backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.25rem' }}></div>
-                                <span style={{ fontWeight: 500 }}>Unseen</span>
-                            </div>
-                        </div>
-                    </div>
                 </aside>
 
                 {/* Main Content */}
-                <main style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--color-bg)', padding: '2rem 1rem' }}>
-                    <div style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '6rem' }}>
+                <main className="flex-1 overflow-y-auto bg-muted/10 p-4 md:p-8">
+                    <div className="max-w-4xl mx-auto pb-24">
                         {/* Progress Bar */}
-                        <div style={{ marginBottom: '2rem', backgroundColor: 'var(--color-border)', borderRadius: '9999px', height: '0.375rem', overflow: 'hidden' }}>
+                        <div className="mb-8 h-1.5 w-full bg-muted rounded-full overflow-hidden">
                             <div
-                                style={{
-                                    height: '100%',
-                                    backgroundColor: 'var(--color-primary)',
-                                    backgroundImage: 'linear-gradient(90deg, var(--color-primary), #60a5fa)',
-                                    width: `${((currentQuestionIndex + 1) / test.questions.length) * 100}%`,
-                                    transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    boxShadow: '0 0 10px rgba(37, 99, 235, 0.3)'
-                                }}
+                                className="h-full bg-primary transition-all duration-500 ease-out rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]"
+                                style={{ width: `${((currentQuestionIndex + 1) / test.questions.length) * 100}%` }}
                             />
                         </div>
 
                         {/* Question Card */}
-                        <div style={{
-                            backgroundColor: 'var(--color-surface)',
-                            borderRadius: '1rem',
-                            boxShadow: 'var(--shadow-md)',
-                            border: '1px solid var(--color-border)',
-                            overflow: 'hidden',
-                            transition: 'all 0.3s ease'
-                        }}>
-                            {/* Question Header */}
-                            <div style={{
-                                backgroundColor: 'var(--color-surface)',
-                                padding: '1.25rem 2rem',
-                                borderBottom: '1px solid var(--color-border)',
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '1rem'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <span style={{
-                                        backgroundColor: 'var(--color-primary)',
-                                        color: '#ffffff',
-                                        padding: '0.35rem 1rem',
-                                        borderRadius: '0.5rem',
-                                        fontSize: '0.875rem',
-                                        fontWeight: '700',
-                                        boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'
-                                    }}>
+                        <Card className="border shadow-lg overflow-hidden">
+                            <CardHeader className="bg-muted/30 border-b px-6 py-4 flex flex-row items-center justify-between space-y-0">
+                                <div className="flex items-center gap-3">
+                                    <Badge variant="default" className="text-sm px-3 py-1 font-bold shadow-sm">
                                         Question {currentQuestionIndex + 1}
-                                    </span>
-                                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', fontWeight: 500 }}>of {test.questions.length}</span>
+                                    </Badge>
+                                    <span className="text-sm font-medium text-muted-foreground">of {test.questions.length}</span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <span style={{
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
-                                        padding: '0.35rem 0.75rem',
-                                        backgroundColor: 'var(--color-bg)',
-                                        borderRadius: '0.375rem',
-                                        color: 'var(--color-text-main)',
-                                        textTransform: 'uppercase',
-                                        border: '1px solid var(--color-border)'
-                                    }}>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="uppercase text-xs font-semibold bg-background">
                                         {currentQuestion.type || 'MCQ'}
-                                    </span>
-                                    <span style={{
-                                        fontSize: '0.75rem',
-                                        fontWeight: 700,
-                                        padding: '0.35rem 0.75rem',
-                                        backgroundColor: 'var(--color-success-bg)',
-                                        color: 'var(--color-success)',
-                                        borderRadius: '0.375rem',
-                                        border: '1px solid rgba(16, 185, 129, 0.2)'
-                                    }}>
+                                    </Badge>
+                                    <Badge variant="outline" className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 font-bold">
                                         +4 / -1
-                                    </span>
+                                    </Badge>
                                 </div>
-                            </div>
+                            </CardHeader>
 
-                            <div style={{ padding: '2rem' }}>
+                            <CardContent className="p-6 md:p-8">
                                 {/* Passage */}
                                 {currentQuestion.passage && (
-                                    <div style={{ marginBottom: '2.5rem', padding: '1.75rem', backgroundColor: 'var(--color-bg)', borderRadius: '0.75rem', borderLeft: '4px solid var(--color-primary)' }}>
-                                        <h4 style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.05em' }}>Reading Passage</h4>
-                                        <div style={{ fontSize: '1rem', lineHeight: 1.7, color: 'var(--color-text-main)', fontFamily: 'serif' }}>
+                                    <div className="mb-8 p-6 bg-muted/40 rounded-xl border-l-4 border-primary">
+                                        <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Reading Passage</h4>
+                                        <div className="prose dark:prose-invert max-w-none text-sm md:text-base leading-relaxed font-serif">
                                             {currentQuestion.passage}
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Question Text */}
-                                <div style={{ fontSize: '1.25rem', color: 'var(--color-text-main)', lineHeight: 1.6, marginBottom: '2.5rem', fontWeight: 500 }}>
+                                <div className="text-lg md:text-xl font-medium leading-relaxed mb-8 text-foreground">
                                     <MathText text={currentQuestion.text} />
                                 </div>
 
                                 {/* Image */}
                                 {currentQuestion.image && (
-                                    <div style={{ marginBottom: '2.5rem', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                                    <div className="mb-8 rounded-xl overflow-hidden border bg-muted/20 max-w-2xl">
                                         <img
                                             src={currentQuestion.image}
                                             alt="Question"
-                                            style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
+                                            className="w-full h-auto object-contain max-h-[400px]"
                                         />
                                     </div>
                                 )}
 
                                 {/* Options / Answer Area */}
-                                <div style={{ marginTop: '2.5rem' }}>
+                                <div className="mt-8">
                                     {currentQuestion.type === 'integer' ? (
-                                        <div style={{ padding: '2rem', backgroundColor: 'var(--color-success-bg)', border: '1px solid var(--color-success)', borderRadius: '1rem', textAlign: 'center' }}>
-                                            <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-success)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Correct Numerical Answer</h4>
-                                            <p style={{ fontSize: '2.5rem', fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-success)', margin: 0 }}>{currentQuestion.correctAnswer}</p>
+                                        <div className="p-8 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 rounded-xl text-center">
+                                            <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-3">Correct Numerical Answer</h4>
+                                            <p className="text-4xl font-mono font-bold text-emerald-700 dark:text-emerald-300 tabular-nums">
+                                                {currentQuestion.correctAnswer}
+                                            </p>
                                         </div>
                                     ) : (
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-                                            <style>{`
-                                                @media (min-width: 768px) {
-                                                    .options-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                                }
-                                            `}</style>
-                                            <div className="options-grid" style={{ display: 'grid', gap: '1.25rem' }}>
-                                                {currentQuestion.options?.map((opt, idx) => {
-                                                    const isCorrect = isOptionCorrect(currentQuestion, opt.id);
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {currentQuestion.options?.map((opt, idx) => {
+                                                const isCorrect = isOptionCorrect(currentQuestion, opt.id);
 
-                                                    return (
-                                                        <div
-                                                            key={idx}
-                                                            className="option-card"
-                                                            style={{
-                                                                position: 'relative',
-                                                                display: 'flex',
-                                                                alignItems: 'flex-start',
-                                                                gap: '1rem',
-                                                                padding: '1.25rem',
-                                                                borderRadius: '0.75rem',
-                                                                border: isCorrect ? '2px solid var(--color-success)' : '1px solid var(--color-border)',
-                                                                backgroundColor: isCorrect ? 'var(--color-success-bg)' : 'var(--color-surface)',
-                                                                transition: 'all 0.2s ease',
-                                                                cursor: 'default'
-                                                            }}
-                                                        >
-                                                            {isCorrect && (
-                                                                <div style={{
-                                                                    position: 'absolute',
-                                                                    top: '-12px',
-                                                                    right: '16px',
-                                                                    backgroundColor: 'var(--color-success)',
-                                                                    color: 'white',
-                                                                    borderRadius: '9999px',
-                                                                    padding: '0.25rem 0.75rem',
-                                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '0.375rem',
-                                                                    fontSize: '0.75rem',
-                                                                    fontWeight: '700',
-                                                                    letterSpacing: '0.025em',
-                                                                    zIndex: 10
-                                                                }}>
-                                                                    <CheckCircle size={14} fill="currentColor" />
-                                                                    CORRECT
-                                                                </div>
-                                                            )}
-
-                                                            <div style={{
-                                                                flexShrink: 0,
-                                                                width: '2.5rem',
-                                                                height: '2.5rem',
-                                                                borderRadius: '0.5rem',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                fontWeight: '700',
-                                                                fontSize: '1rem',
-                                                                backgroundColor: isCorrect ? 'var(--color-success)' : 'var(--color-bg)',
-                                                                color: isCorrect ? 'white' : 'var(--color-text-muted)',
-                                                                border: isCorrect ? 'none' : '1px solid var(--color-border)'
-                                                            }}>
-                                                                {opt.id}
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className={cn(
+                                                            "relative flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-default",
+                                                            isCorrect
+                                                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+                                                                : "border-border bg-card"
+                                                        )}
+                                                    >
+                                                        {isCorrect && (
+                                                            <div className="absolute -top-3 -right-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                                                <CheckCircle className="w-3 h-3" />
+                                                                CORRECT
                                                             </div>
+                                                        )}
 
-                                                            <div style={{ flex: 1, paddingTop: '0.25rem' }}>
-                                                                <div style={{ fontSize: '1rem', color: isCorrect ? 'var(--color-text-main)' : 'var(--color-text-main)', fontWeight: isCorrect ? 600 : 400, lineHeight: 1.5 }}>
-                                                                    <MathText text={opt.text} />
-                                                                </div>
-                                                                {opt.image && (
-                                                                    <img src={opt.image} alt="Option" style={{ marginTop: '1rem', borderRadius: '0.5rem', maxHeight: '10rem', height: 'auto', border: '1px solid var(--color-border)' }} />
-                                                                )}
-                                                            </div>
+                                                        <div className={cn(
+                                                            "flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg border",
+                                                            isCorrect
+                                                                ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                                                : "bg-muted text-muted-foreground border-transparent"
+                                                        )}>
+                                                            {opt.id}
                                                         </div>
-                                                    );
-                                                })}
-                                            </div>
+
+                                                        <div className="flex-1 pt-1">
+                                                            <div className={cn(
+                                                                "text-base leading-snug",
+                                                                isCorrect ? "font-semibold text-foreground" : "text-muted-foreground"
+                                                            )}>
+                                                                <MathText text={opt.text} />
+                                                            </div>
+                                                            {opt.image && (
+                                                                <img src={opt.image} alt="Option" className="mt-3 rounded-md border max-h-32 object-contain bg-background" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        </div>
+                            </CardContent>
+                        </Card>
 
                         {/* Navigation Buttons */}
-                        <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                            <button
-                                className={`btn btn-outline nav-btn ${currentQuestionIndex === 0 ? 'invisible' : ''}`}
+                        <div className="mt-8 flex items-center justify-between gap-4">
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                className={cn("gap-2 pl-3", currentQuestionIndex === 0 && "invisible")}
                                 onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.75rem',
-                                    padding: '0.875rem 1.5rem',
-                                    borderRadius: '0.75rem',
-                                    fontWeight: 600,
-                                    fontSize: '0.95rem',
-                                    backgroundColor: 'var(--color-surface)',
-                                    color: 'var(--color-text-main)',
-                                    border: '1px solid var(--color-border)'
-                                }}
                             >
-                                <ChevronLeft size={20} />
+                                <ChevronLeft className="w-5 h-5" />
                                 Previous
-                            </button>
+                            </Button>
 
-                            <button
-                                className={`btn btn-primary nav-btn ${currentQuestionIndex === test.questions.length - 1 ? 'invisible' : ''}`}
+                            <Button
+                                size="lg"
+                                className={cn("gap-2 pr-3 shadow-md", currentQuestionIndex === test.questions.length - 1 && "invisible")}
                                 onClick={() => setCurrentQuestionIndex(prev => Math.min(test.questions.length - 1, prev + 1))}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.75rem',
-                                    padding: '0.875rem 2rem',
-                                    borderRadius: '0.75rem',
-                                    fontWeight: 600,
-                                    fontSize: '0.95rem',
-                                    backgroundColor: 'var(--color-primary)',
-                                    color: 'white',
-                                    border: 'none',
-                                    boxShadow: '0 4px 6px rgba(37, 99, 235, 0.2)'
-                                }}
                             >
                                 Next
-                                <ChevronRight size={20} />
-                            </button>
+                                <ChevronRight className="w-5 h-5" />
+                            </Button>
                         </div>
                     </div>
                 </main>
@@ -505,14 +288,7 @@ const TestPreview = () => {
             {/* Backdrop for mobile palette */}
             {showPalette && (
                 <div
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        backdropFilter: 'blur(4px)',
-                        zIndex: 30,
-                        display: window.innerWidth >= 1024 ? 'none' : 'block'
-                    }}
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
                     onClick={() => setShowPalette(false)}
                 />
             )}
