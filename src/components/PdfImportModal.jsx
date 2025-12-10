@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, CheckSquare, Square, X, Loader2, AlertTriangle, Terminal } from 'lucide-react';
 import { extractQuestionsWithGemini } from '../utils/geminiExtractor';
 import MathText from './MathText';
+import { Button } from './ui/Button';
+import { cn } from '../lib/utils';
 
 const PdfImportModal = ({ isOpen, onClose, onImport }) => {
     const [file, setFile] = useState(null);
@@ -32,11 +34,6 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
             setError('Please upload a valid PDF file.');
             return;
         }
-
-        // Check for API key
-        // API key is now hardcoded in the extractor
-        // const geminiApiKey = localStorage.getItem('gemini_api_key');
-        // if (!geminiApiKey) { ... }
 
         setFile(selectedFile);
         setError('');
@@ -85,174 +82,149 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-            padding: '0.5rem'
-        }}>
-            <div className="card pdf-import-modal" style={{
-                width: '100%',
-                maxWidth: 'min(900px, calc(100vw - 1rem))',
-                height: 'min(90vh, calc(100vh - 1rem))',
-                maxHeight: '90vh',
-                display: 'flex',
-                flexDirection: 'column',
-                padding: 0,
-                overflow: 'hidden',
-                backgroundColor: '#ffffff',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-            }}>
-                <div style={{ padding: 'clamp(0.75rem, 3vw, 1.5rem)', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f9fafb' }}>
-                    <h2 style={{ fontSize: 'clamp(1rem, 4vw, 1.25rem)', fontWeight: 'bold', color: '#111827', margin: 0 }}>Import from PDF</h2>
-                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#6b7280', padding: '0.5rem', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <X size={24} />
-                    </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-background w-full max-w-5xl h-[90vh] max-h-[90vh] flex flex-col rounded-xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-200">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-muted/30">
+                    <div>
+                        <h2 className="text-xl font-bold tracking-tight">Import from PDF</h2>
+                        <p className="text-sm text-muted-foreground hidden sm:block">Extract questions automatically using AI</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors">
+                        <X className="w-5 h-5" />
+                    </Button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#ffffff' }}>
-                    {/* Content Panel */}
-                    <div style={{ flex: 1, padding: 'clamp(0.75rem, 3vw, 1.5rem)', overflowY: 'auto', backgroundColor: '#ffffff' }}>
+                {/* Content */}
+                <div className="flex-1 overflow-hidden flex flex-col bg-background">
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                         {!file ? (
-                            <div>
-                                <div style={{
-                                    border: '2px dashed #d1d5db',
-                                    borderRadius: '12px',
-                                    padding: 'clamp(1.5rem, 5vw, 3rem)',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    backgroundColor: '#f3f4f6',
-                                    minHeight: '150px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
+                            <div className="h-full flex flex-col items-center justify-center">
+                                <div 
+                                    className="w-full max-w-xl border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 sm:p-12 text-center hover:bg-muted/30 transition-all cursor-pointer group"
                                     onClick={() => document.getElementById('pdf-upload').click()}
                                 >
-                                    <Upload size={40} style={{ color: '#6b7280', marginBottom: '0.75rem' }} />
-                                    <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#111827', fontSize: 'clamp(0.875rem, 3vw, 1rem)' }}>Tap to upload PDF</p>
-                                    <p style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: '#6b7280' }}>AI-powered extraction</p>
+                                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                                        <Upload className="w-8 h-8 text-primary" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold mb-2">Upload Exam Paper</h3>
+                                    <p className="text-muted-foreground mb-6">Click or drag PDF here to start AI extraction</p>
+                                    <Button variant="outline" className="gap-2">
+                                        <FileText className="w-4 h-4" /> Select PDF
+                                    </Button>
                                     <input
                                         id="pdf-upload"
                                         type="file"
                                         accept=".pdf"
-                                        style={{ display: 'none' }}
+                                        className="hidden"
                                         onChange={handleFileChange}
                                     />
                                 </div>
-                                <div style={{ marginTop: '0.75rem', padding: 'clamp(0.5rem, 2vw, 1rem)', backgroundColor: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: '#92400e' }}>
-                                    <strong>Note:</strong> Diagrams/images need manual addition after import.
+                                <div className="mt-6 flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg max-w-xl text-sm text-yellow-800 dark:text-yellow-200">
+                                    <AlertTriangle className="w-5 h-5 shrink-0" />
+                                    <p>Note: Complex diagrams may need manual adjustment after import. Ensure the PDF text is selectable for best results.</p>
                                 </div>
                             </div>
                         ) : (
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', padding: 'clamp(0.5rem, 2vw, 0.75rem)', backgroundColor: '#f3f4f6', borderRadius: '8px', flexWrap: 'wrap', border: '1px solid #e5e7eb' }}>
-                                    <FileText size={18} color="#4f46e5" style={{ flexShrink: 0 }} />
-                                    <span style={{ fontWeight: 500, flex: 1, color: '#111827', fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: '100px' }}>{file.name}</span>
-                                    <button
+                            <div className="space-y-6">
+                                {/* File Status Bar */}
+                                <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border">
+                                    <div className="p-2 bg-background rounded-md border shadow-sm">
+                                        <FileText className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <span className="font-medium flex-1 truncate">{file.name}</span>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
                                         onClick={() => { setFile(null); setError(''); setLogs([]); }}
-                                        style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', padding: '0.25rem 0.5rem', whiteSpace: 'nowrap' }}
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                     >
-                                        Change
-                                    </button>
+                                        Change File
+                                    </Button>
                                 </div>
 
                                 {isParsing ? (
-                                    <div style={{ textAlign: 'center', padding: 'clamp(1rem, 4vw, 2rem)' }}>
-                                        <Loader2 size={28} className="spin" style={{ color: 'var(--color-primary)', marginBottom: '0.75rem' }} />
-                                        <p style={{ color: 'var(--color-text-main)', fontWeight: 600, marginBottom: '0.5rem', fontSize: 'clamp(0.875rem, 3vw, 1rem)' }}>Analyzing PDF...</p>
-                                        <p style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>This may take up to 2 minutes</p>
-
-                                        {/* Progress Bar */}
-                                        <div style={{
-                                            width: '100%',
-                                            maxWidth: '300px',
-                                            margin: '0 auto',
-                                            height: '6px',
-                                            backgroundColor: 'var(--color-bg)',
-                                            borderRadius: '9999px',
-                                            overflow: 'hidden',
-                                            border: '1px solid var(--color-border)'
-                                        }}>
-                                            <div style={{
-                                                height: '100%',
-                                                width: '100%',
-                                                background: 'linear-gradient(90deg, var(--color-primary), #8b5cf6, var(--color-primary))',
-                                                backgroundSize: '200% 100%',
-                                                animation: 'shimmer 2s linear infinite'
-                                            }} />
+                                    <div className="flex flex-col items-center justified-center py-12 text-center">
+                                        <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
+                                        <h3 className="text-xl font-semibold mb-2">Analyzing Document...</h3>
+                                        <p className="text-muted-foreground mb-8 max-w-sm">This typically takes 30-60 seconds. Our AI is identifying questions, options, and diagrams.</p>
+                                        
+                                        <div className="w-full max-w-md h-2 bg-muted rounded-full overflow-hidden">
+                                            <div className="h-full bg-primary animate-progress-indeterminate origin-left" style={{ width: '50%' }} />
                                         </div>
-
-                                        <p style={{ fontSize: 'clamp(0.65rem, 2vw, 0.75rem)', color: 'var(--color-text-muted)', marginTop: '0.75rem' }}>
-                                            Please do not close this window
-                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-4">Do not close this window</p>
                                     </div>
                                 ) : error ? (
-                                    <div style={{ padding: '1rem', backgroundColor: '#fee2e2', color: '#ef4444', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-                                        <AlertTriangle size={24} style={{ marginBottom: '0.5rem' }} />
+                                    <div className="p-6 bg-destructive/10 text-destructive rounded-xl border border-destructive/20 text-center">
+                                        <AlertTriangle className="w-10 h-10 mx-auto mb-3" />
+                                        <h3 className="font-semibold mb-1">Extraction Failed</h3>
                                         <p>{error}</p>
+                                        <Button 
+                                            variant="outline" 
+                                            className="mt-4 border-destructive/30 hover:bg-destructive/10 text-destructive"
+                                            onClick={() => { setFile(null); setError(''); }}
+                                        >
+                                            Try Another File
+                                        </Button>
                                     </div>
                                 ) : (
-                                    <div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.25rem', padding: '0.5rem 0.75rem', backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1px solid #10b981' }}>
-                                            <p style={{ fontWeight: 600, color: '#047857', fontSize: 'clamp(0.875rem, 3vw, 1rem)', margin: 0 }}>Found {parsedQuestions.length} Questions</p>
-                                            <p style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: '#059669', margin: 0, fontWeight: 500 }}>{selectedIndices.size} selected</p>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur py-2 border-b">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium text-muted-foreground">Found:</span>
+                                                <span className="text-lg font-bold text-primary">{parsedQuestions.length} Questions</span>
+                                            </div>
+                                            <div className="text-sm text-muted-foreground">
+                                                <span className="font-medium text-foreground">{selectedIndices.size}</span> selected
+                                            </div>
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        <div className="grid gap-4">
                                             {parsedQuestions.map((q, i) => (
                                                 <div
                                                     key={i}
                                                     onClick={() => toggleSelection(i)}
-                                                    style={{
-                                                        display: 'flex',
-                                                        gap: 'clamp(0.5rem, 2vw, 1rem)',
-                                                        padding: 'clamp(0.75rem, 2vw, 1rem)',
-                                                        border: '2px solid',
-                                                        borderColor: selectedIndices.has(i) ? '#4f46e5' : '#e5e7eb',
-                                                        borderRadius: '10px',
-                                                        cursor: 'pointer',
-                                                        backgroundColor: selectedIndices.has(i) ? '#eef2ff' : '#ffffff',
-                                                        transition: 'all 0.2s',
-                                                        boxShadow: selectedIndices.has(i) ? '0 4px 6px -1px rgba(79, 70, 229, 0.1)' : '0 1px 3px rgba(0,0,0,0.1)'
-                                                    }}
+                                                    className={cn(
+                                                        "group relative flex gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md",
+                                                        selectedIndices.has(i) 
+                                                            ? "border-primary bg-primary/5 dark:bg-primary/10" 
+                                                            : "border-border bg-card hover:border-primary/50"
+                                                    )}
                                                 >
-                                                    <div style={{ color: selectedIndices.has(i) ? '#4f46e5' : '#9ca3af', flexShrink: 0 }}>
-                                                        {selectedIndices.has(i) ? <CheckSquare size={20} /> : <Square size={20} />}
+                                                    <div className={cn(
+                                                        "shrink-0 mt-1 transition-colors",
+                                                        selectedIndices.has(i) ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"
+                                                    )}>
+                                                        {selectedIndices.has(i) ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
                                                     </div>
-                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                    
+                                                    <div className="flex-1 min-w-0 space-y-3">
                                                         {q.image && (
-                                                            <div style={{ marginBottom: '0.5rem' }}>
+                                                            <div className="rounded-lg border bg-muted/50 p-2 inline-block">
                                                                 <img
                                                                     src={q.image}
                                                                     alt="Question Diagram"
-                                                                    style={{
-                                                                        maxWidth: '100%',
-                                                                        maxHeight: '150px',
-                                                                        border: '1px solid #e5e7eb',
-                                                                        borderRadius: '6px'
-                                                                    }}
+                                                                    className="max-h-[200px] rounded object-contain"
                                                                 />
                                                             </div>
                                                         )}
-                                                        <p style={{ fontWeight: 500, marginBottom: '0.5rem', color: '#1f2937', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)', lineHeight: 1.4 }}>
-                                                            <MathText text={q.text} />
-                                                        </p>
-                                                        <ul style={{ paddingLeft: 'clamp(0.75rem, 2vw, 1.25rem)', color: '#4b5563', fontSize: 'clamp(0.7rem, 2.5vw, 0.875rem)', margin: 0 }}>
+                                                        <div className="prose dark:prose-invert max-w-none">
+                                                            <p className="font-medium text-foreground text-lg leading-relaxed">
+                                                                <span className="text-primary font-bold mr-2">Q{i + 1}.</span>
+                                                                <MathText text={q.text} />
+                                                            </p>
+                                                        </div>
+                                                        <div className="grid gap-2 sm:grid-cols-2">
                                                             {q.options.map((opt, optIndex) => (
-                                                                <li key={optIndex} style={{ marginBottom: '0.15rem' }}>
-                                                                    <MathText text={opt.text} />
-                                                                </li>
+                                                                <div key={optIndex} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                                                    <div className="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 text-[10px] font-medium bg-muted">
+                                                                        {String.fromCharCode(65 + optIndex)}
+                                                                    </div>
+                                                                    <span><MathText text={opt.text} /></span>
+                                                                </div>
                                                             ))}
-                                                        </ul>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
@@ -262,38 +234,34 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                             </div>
                         )}
                     </div>
-
                 </div>
 
-                <div className="pdf-modal-footer" style={{ padding: 'clamp(0.75rem, 3vw, 1.5rem)', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap', backgroundColor: '#f9fafb' }}>
-                    <button onClick={onClose} style={{ flex: '1 1 auto', minWidth: '80px', padding: '0.75rem 1rem', backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '8px', color: '#374151', fontWeight: 500, cursor: 'pointer' }}>Cancel</button>
-                    <button
+                {/* Footer */}
+                <div className="p-4 sm:p-6 border-t bg-muted/30 flex justify-end gap-3 shrink-0">
+                    <Button variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button
                         onClick={handleImport}
                         disabled={!file || isParsing || selectedIndices.size === 0}
-                        style={{
-                            flex: '1 1 auto',
-                            minWidth: '120px',
-                            padding: '0.75rem 1rem',
-                            backgroundColor: (!file || isParsing || selectedIndices.size === 0) ? '#9ca3af' : '#4f46e5',
-                            border: 'none',
-                            borderRadius: '8px',
-                            color: '#ffffff',
-                            fontWeight: 600,
-                            cursor: (!file || isParsing || selectedIndices.size === 0) ? 'not-allowed' : 'pointer'
-                        }}
+                        className="gap-2"
                     >
-                        Import {selectedIndices.size > 0 ? `(${selectedIndices.size})` : ''}
-                    </button>
+                        Import Selected
+                        {selectedIndices.size > 0 && <span className="bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded text-xs font-bold">{selectedIndices.size}</span>}
+                    </Button>
                 </div>
             </div>
-            <style>{`
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes shimmer { 
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-      `}</style>
+            
+            <style jsx>{`
+                @keyframes progress-indeterminate {
+                    0% { transform: translateX(-100%) scaleX(0.2); }
+                    50% { transform: translateX(0%) scaleX(0.5); }
+                    100% { transform: translateX(100%) scaleX(0.2); }
+                }
+                .animate-progress-indeterminate {
+                    animation: progress-indeterminate 2s infinite linear;
+                }
+            `}</style>
         </div>
     );
 };
