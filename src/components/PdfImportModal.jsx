@@ -84,7 +84,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-background w-full max-w-5xl h-[90vh] max-h-[90vh] flex flex-col rounded-xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-200">
-                
+
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-muted/30">
                     <div>
@@ -101,7 +101,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                     <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                         {!file ? (
                             <div className="h-full flex flex-col items-center justify-center">
-                                <div 
+                                <div
                                     className="w-full max-w-xl border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 sm:p-12 text-center hover:bg-muted/30 transition-all cursor-pointer group"
                                     onClick={() => document.getElementById('pdf-upload').click()}
                                 >
@@ -123,7 +123,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                 </div>
                                 <div className="mt-6 flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg max-w-xl text-sm text-yellow-800 dark:text-yellow-200">
                                     <AlertTriangle className="w-5 h-5 shrink-0" />
-                                    <p>Note: Complex diagrams may need manual adjustment after import. Ensure the PDF text is selectable for best results.</p>
+                                    <p>Note: Diagrams may need manual adjustment after import. Ensure the PDF text is selectable for best results.</p>
                                 </div>
                             </div>
                         ) : (
@@ -134,9 +134,9 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                         <FileText className="w-5 h-5 text-primary" />
                                     </div>
                                     <span className="font-medium flex-1 truncate">{file.name}</span>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => { setFile(null); setError(''); setLogs([]); }}
                                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                     >
@@ -148,8 +148,8 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                     <div className="flex flex-col items-center justified-center py-12 text-center">
                                         <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
                                         <h3 className="text-xl font-semibold mb-2">Analyzing Document...</h3>
-                                        <p className="text-muted-foreground mb-8 max-w-sm">This typically takes 30-60 seconds. Our AI is identifying questions, options, and diagrams.</p>
-                                        
+                                        <p className="text-muted-foreground mb-8 max-w-sm">This typically takes 120-200 seconds. Our AI is identifying questions, options, and diagrams.</p>
+
                                         <div className="w-full max-w-md h-2 bg-muted rounded-full overflow-hidden">
                                             <div className="h-full bg-primary animate-progress-indeterminate origin-left" style={{ width: '50%' }} />
                                         </div>
@@ -160,8 +160,8 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                         <AlertTriangle className="w-10 h-10 mx-auto mb-3" />
                                         <h3 className="font-semibold mb-1">Extraction Failed</h3>
                                         <p>{error}</p>
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             className="mt-4 border-destructive/30 hover:bg-destructive/10 text-destructive"
                                             onClick={() => { setFile(null); setError(''); }}
                                         >
@@ -187,8 +187,8 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                                     onClick={() => toggleSelection(i)}
                                                     className={cn(
                                                         "group relative flex gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md",
-                                                        selectedIndices.has(i) 
-                                                            ? "border-primary bg-primary/5 dark:bg-primary/10" 
+                                                        selectedIndices.has(i)
+                                                            ? "border-primary bg-primary/5 dark:bg-primary/10"
                                                             : "border-border bg-card hover:border-primary/50"
                                                     )}
                                                 >
@@ -198,7 +198,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                                     )}>
                                                         {selectedIndices.has(i) ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
                                                     </div>
-                                                    
+
                                                     <div className="flex-1 min-w-0 space-y-3">
                                                         {q.image && (
                                                             <div className="rounded-lg border bg-muted/50 p-2 inline-block">
@@ -251,7 +251,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                     </Button>
                 </div>
             </div>
-            
+
             <style jsx>{`
                 @keyframes progress-indeterminate {
                     0% { transform: translateX(-100%) scaleX(0.2); }
