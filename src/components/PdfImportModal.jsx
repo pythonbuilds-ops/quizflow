@@ -96,42 +96,50 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 50,
-            padding: '1rem'
+            padding: '0.5rem'
         }}>
-            <div className="card" style={{
+            <div className="card pdf-import-modal" style={{
                 width: '100%',
-                maxWidth: '900px',
-                height: '90vh',
+                maxWidth: 'min(900px, calc(100vw - 1rem))',
+                height: 'min(90vh, calc(100vh - 1rem))',
+                maxHeight: '90vh',
                 display: 'flex',
                 flexDirection: 'column',
                 padding: 0,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                backgroundColor: '#ffffff',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
             }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--color-text-main)' }}>Import Questions from PDF</h2>
-                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                <div style={{ padding: 'clamp(0.75rem, 3vw, 1.5rem)', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f9fafb' }}>
+                    <h2 style={{ fontSize: 'clamp(1rem, 4vw, 1.25rem)', fontWeight: 'bold', color: '#111827', margin: 0 }}>Import from PDF</h2>
+                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#6b7280', padding: '0.5rem', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <X size={24} />
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                    {/* Left Panel: Content */}
-                    <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto', borderRight: '1px solid var(--color-border)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#ffffff' }}>
+                    {/* Content Panel */}
+                    <div style={{ flex: 1, padding: 'clamp(0.75rem, 3vw, 1.5rem)', overflowY: 'auto', backgroundColor: '#ffffff' }}>
                         {!file ? (
                             <div>
                                 <div style={{
-                                    border: '2px dashed var(--color-border)',
-                                    borderRadius: 'var(--radius-lg)',
-                                    padding: '3rem',
+                                    border: '2px dashed #d1d5db',
+                                    borderRadius: '12px',
+                                    padding: 'clamp(1.5rem, 5vw, 3rem)',
                                     textAlign: 'center',
                                     cursor: 'pointer',
-                                    backgroundColor: 'var(--color-bg)'
+                                    backgroundColor: '#f3f4f6',
+                                    minHeight: '150px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                 }}
                                     onClick={() => document.getElementById('pdf-upload').click()}
                                 >
-                                    <Upload size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }} />
-                                    <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>Click to upload PDF</p>
-                                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>AI-powered extraction with Gemini Vision</p>
+                                    <Upload size={40} style={{ color: '#6b7280', marginBottom: '0.75rem' }} />
+                                    <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#111827', fontSize: 'clamp(0.875rem, 3vw, 1rem)' }}>Tap to upload PDF</p>
+                                    <p style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: '#6b7280' }}>AI-powered extraction</p>
                                     <input
                                         id="pdf-upload"
                                         type="file"
@@ -140,35 +148,35 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                         onChange={handleFileChange}
                                     />
                                 </div>
-                                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#fffbeb', border: '1px solid #fbbf24', borderRadius: 'var(--radius-md)', fontSize: '0.875rem', color: '#92400e' }}>
-                                    <strong>Note:</strong> If questions contain diagrams or images, you will need to add them manually after import.
+                                <div style={{ marginTop: '0.75rem', padding: 'clamp(0.5rem, 2vw, 1rem)', backgroundColor: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: '#92400e' }}>
+                                    <strong>Note:</strong> Diagrams/images need manual addition after import.
                                 </div>
                             </div>
                         ) : (
                             <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '0.75rem', backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                                    <FileText size={20} color="var(--color-primary)" />
-                                    <span style={{ fontWeight: 500, flex: 1, color: 'var(--color-text-main)' }}>{file.name}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', padding: 'clamp(0.5rem, 2vw, 0.75rem)', backgroundColor: '#f3f4f6', borderRadius: '8px', flexWrap: 'wrap', border: '1px solid #e5e7eb' }}>
+                                    <FileText size={18} color="#4f46e5" style={{ flexShrink: 0 }} />
+                                    <span style={{ fontWeight: 500, flex: 1, color: '#111827', fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: '100px' }}>{file.name}</span>
                                     <button
                                         onClick={() => { setFile(null); setError(''); setLogs([]); }}
-                                        style={{ color: 'var(--color-error)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}
+                                        style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', padding: '0.25rem 0.5rem', whiteSpace: 'nowrap' }}
                                     >
-                                        Change File
+                                        Change
                                     </button>
                                 </div>
 
                                 {isParsing ? (
-                                    <div style={{ textAlign: 'center', padding: '2rem' }}>
-                                        <Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)', marginBottom: '1rem' }} />
-                                        <p style={{ color: 'var(--color-text-main)', fontWeight: 600, marginBottom: '0.5rem' }}>AI is analyzing your PDF...</p>
-                                        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>This may take up to 2 minutes to process</p>
+                                    <div style={{ textAlign: 'center', padding: 'clamp(1rem, 4vw, 2rem)' }}>
+                                        <Loader2 size={28} className="spin" style={{ color: 'var(--color-primary)', marginBottom: '0.75rem' }} />
+                                        <p style={{ color: 'var(--color-text-main)', fontWeight: 600, marginBottom: '0.5rem', fontSize: 'clamp(0.875rem, 3vw, 1rem)' }}>Analyzing PDF...</p>
+                                        <p style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>This may take up to 2 minutes</p>
 
                                         {/* Progress Bar */}
                                         <div style={{
                                             width: '100%',
-                                            maxWidth: '400px',
+                                            maxWidth: '300px',
                                             margin: '0 auto',
-                                            height: '8px',
+                                            height: '6px',
                                             backgroundColor: 'var(--color-bg)',
                                             borderRadius: '9999px',
                                             overflow: 'hidden',
@@ -183,7 +191,7 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                             }} />
                                         </div>
 
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '1rem' }}>
+                                        <p style={{ fontSize: 'clamp(0.65rem, 2vw, 0.75rem)', color: 'var(--color-text-muted)', marginTop: '0.75rem' }}>
                                             Please do not close this window
                                         </p>
                                     </div>
@@ -194,32 +202,33 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                     </div>
                                 ) : (
                                     <div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                            <p style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>Found {parsedQuestions.length} Questions</p>
-                                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{selectedIndices.size} selected</p>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.25rem', padding: '0.5rem 0.75rem', backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1px solid #10b981' }}>
+                                            <p style={{ fontWeight: 600, color: '#047857', fontSize: 'clamp(0.875rem, 3vw, 1rem)', margin: 0 }}>Found {parsedQuestions.length} Questions</p>
+                                            <p style={{ fontSize: 'clamp(0.75rem, 2.5vw, 0.875rem)', color: '#059669', margin: 0, fontWeight: 500 }}>{selectedIndices.size} selected</p>
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                             {parsedQuestions.map((q, i) => (
                                                 <div
                                                     key={i}
                                                     onClick={() => toggleSelection(i)}
                                                     style={{
                                                         display: 'flex',
-                                                        gap: '1rem',
-                                                        padding: '1rem',
-                                                        border: '1px solid',
-                                                        borderColor: selectedIndices.has(i) ? 'var(--color-primary)' : 'var(--color-border)',
-                                                        borderRadius: 'var(--radius-md)',
+                                                        gap: 'clamp(0.5rem, 2vw, 1rem)',
+                                                        padding: 'clamp(0.75rem, 2vw, 1rem)',
+                                                        border: '2px solid',
+                                                        borderColor: selectedIndices.has(i) ? '#4f46e5' : '#e5e7eb',
+                                                        borderRadius: '10px',
                                                         cursor: 'pointer',
-                                                        backgroundColor: selectedIndices.has(i) ? 'rgba(79, 70, 229, 0.05)' : 'var(--color-surface)',
-                                                        transition: 'all 0.2s'
+                                                        backgroundColor: selectedIndices.has(i) ? '#eef2ff' : '#ffffff',
+                                                        transition: 'all 0.2s',
+                                                        boxShadow: selectedIndices.has(i) ? '0 4px 6px -1px rgba(79, 70, 229, 0.1)' : '0 1px 3px rgba(0,0,0,0.1)'
                                                     }}
                                                 >
-                                                    <div style={{ color: selectedIndices.has(i) ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>
+                                                    <div style={{ color: selectedIndices.has(i) ? '#4f46e5' : '#9ca3af', flexShrink: 0 }}>
                                                         {selectedIndices.has(i) ? <CheckSquare size={20} /> : <Square size={20} />}
                                                     </div>
-                                                    <div style={{ flex: 1 }}>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
                                                         {q.image && (
                                                             <div style={{ marginBottom: '0.5rem' }}>
                                                                 <img
@@ -227,19 +236,19 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                                                                     alt="Question Diagram"
                                                                     style={{
                                                                         maxWidth: '100%',
-                                                                        maxHeight: '200px',
-                                                                        border: '1px solid var(--color-border)',
-                                                                        borderRadius: 'var(--radius-sm)'
+                                                                        maxHeight: '150px',
+                                                                        border: '1px solid #e5e7eb',
+                                                                        borderRadius: '6px'
                                                                     }}
                                                                 />
                                                             </div>
                                                         )}
-                                                        <p style={{ fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>
+                                                        <p style={{ fontWeight: 500, marginBottom: '0.5rem', color: '#1f2937', fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)', lineHeight: 1.4 }}>
                                                             <MathText text={q.text} />
                                                         </p>
-                                                        <ul style={{ paddingLeft: '1.25rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                                                        <ul style={{ paddingLeft: 'clamp(0.75rem, 2vw, 1.25rem)', color: '#4b5563', fontSize: 'clamp(0.7rem, 2.5vw, 0.875rem)', margin: 0 }}>
                                                             {q.options.map((opt, optIndex) => (
-                                                                <li key={optIndex} style={{ marginBottom: '0.25rem' }}>
+                                                                <li key={optIndex} style={{ marginBottom: '0.15rem' }}>
                                                                     <MathText text={opt.text} />
                                                                 </li>
                                                             ))}
@@ -254,18 +263,26 @@ const PdfImportModal = ({ isOpen, onClose, onImport }) => {
                         )}
                     </div>
 
-                    {/* Right Panel: Logs */}
-                    {/* Logs removed as per request, logging to console instead */}
                 </div>
 
-                <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                    <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+                <div className="pdf-modal-footer" style={{ padding: 'clamp(0.75rem, 3vw, 1.5rem)', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap', backgroundColor: '#f9fafb' }}>
+                    <button onClick={onClose} style={{ flex: '1 1 auto', minWidth: '80px', padding: '0.75rem 1rem', backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '8px', color: '#374151', fontWeight: 500, cursor: 'pointer' }}>Cancel</button>
                     <button
-                        className="btn btn-primary"
                         onClick={handleImport}
                         disabled={!file || isParsing || selectedIndices.size === 0}
+                        style={{
+                            flex: '1 1 auto',
+                            minWidth: '120px',
+                            padding: '0.75rem 1rem',
+                            backgroundColor: (!file || isParsing || selectedIndices.size === 0) ? '#9ca3af' : '#4f46e5',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            cursor: (!file || isParsing || selectedIndices.size === 0) ? 'not-allowed' : 'pointer'
+                        }}
                     >
-                        Import {selectedIndices.size > 0 ? `${selectedIndices.size} Questions` : ''}
+                        Import {selectedIndices.size > 0 ? `(${selectedIndices.size})` : ''}
                     </button>
                 </div>
             </div>

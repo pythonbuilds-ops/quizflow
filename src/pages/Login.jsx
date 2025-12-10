@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, GraduationCap } from 'lucide-react';
@@ -8,8 +8,19 @@ const Login = () => {
     const [password, setPassword] = useState('password');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, user, role, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (!authLoading && user) {
+            if (role === 'teacher') {
+                navigate('/dashboard', { replace: true });
+            } else if (role === 'student') {
+                navigate('/student/dashboard', { replace: true });
+            }
+        }
+    }, [user, role, authLoading, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

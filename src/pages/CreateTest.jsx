@@ -156,35 +156,35 @@ const CreateTest = () => {
     };
 
     const StepIndicator = () => (
-        <div className="flex items-center justify-center mb-8 gap-4 text-sm font-medium">
-            <div className={cn("flex items-center gap-2", step >= 1 ? "text-primary" : "text-muted-foreground")}>
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border-2", step >= 1 ? "border-primary bg-primary/10" : "border-muted-foreground/30")}>1</div>
-                Test Details
+        <div className="flex items-center justify-center mb-6 sm:mb-8 gap-2 sm:gap-4 text-sm font-medium px-2">
+            <div className={cn("flex items-center gap-1 sm:gap-2", step >= 1 ? "text-primary" : "text-muted-foreground")}>
+                <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-2 text-xs sm:text-sm flex-shrink-0", step >= 1 ? "border-primary bg-primary/10" : "border-muted-foreground/30")}>1</div>
+                <span className="hidden xs:inline sm:inline">Details</span>
             </div>
-            <div className={cn("h-px w-12", step >= 2 ? "bg-primary" : "bg-muted-foreground/30")} />
-            <div className={cn("flex items-center gap-2", step >= 2 ? "text-primary" : "text-muted-foreground")}>
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border-2", step >= 2 ? "border-primary bg-primary/10" : "border-muted-foreground/30")}>2</div>
-                Questions
+            <div className={cn("h-px w-6 sm:w-12 flex-shrink-0", step >= 2 ? "bg-primary" : "bg-muted-foreground/30")} />
+            <div className={cn("flex items-center gap-1 sm:gap-2", step >= 2 ? "text-primary" : "text-muted-foreground")}>
+                <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-2 text-xs sm:text-sm flex-shrink-0", step >= 2 ? "border-primary bg-primary/10" : "border-muted-foreground/30")}>2</div>
+                <span className="hidden xs:inline sm:inline">Questions</span>
             </div>
-            <div className={cn("h-px w-12", step >= 3 ? "bg-primary" : "bg-muted-foreground/30")} />
-            <div className={cn("flex items-center gap-2", step >= 3 ? "text-primary" : "text-muted-foreground")}>
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border-2", step >= 3 ? "border-primary bg-primary/10" : "border-muted-foreground/30")}>3</div>
-                Review
+            <div className={cn("h-px w-6 sm:w-12 flex-shrink-0", step >= 3 ? "bg-primary" : "bg-muted-foreground/30")} />
+            <div className={cn("flex items-center gap-1 sm:gap-2", step >= 3 ? "text-primary" : "text-muted-foreground")}>
+                <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-2 text-xs sm:text-sm flex-shrink-0", step >= 3 ? "border-primary bg-primary/10" : "border-muted-foreground/30")}>3</div>
+                <span className="hidden xs:inline sm:inline">Review</span>
             </div>
         </div>
     );
 
     return (
-        <div className="container max-w-5xl mx-auto py-8 px-4">
+        <div className="container max-w-5xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
             <PdfImportModal
                 isOpen={showPdfModal}
                 onClose={() => setShowPdfModal(false)}
                 onImport={handlePdfImport}
             />
 
-            <div className="flex flex-col items-center mb-8">
-                <h1 className="text-3xl font-bold tracking-tight mb-2">Create New Test</h1>
-                <p className="text-muted-foreground">Follow the steps to configure and publish your test</p>
+            <div className="flex flex-col items-center mb-6 sm:mb-8 px-2">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1 sm:mb-2 text-center">Create New Test</h1>
+                <p className="text-muted-foreground text-sm sm:text-base text-center">Follow the steps to configure and publish your test</p>
             </div>
 
             <StepIndicator />
@@ -218,7 +218,7 @@ const CreateTest = () => {
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Start Time</Label>
                                 <Input
@@ -237,7 +237,7 @@ const CreateTest = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Duration (mins)</Label>
                                 <div className="relative">
@@ -266,7 +266,7 @@ const CreateTest = () => {
                             </div>
                         </div>
                     </CardContent>
-                    <CardFooter className="flex justify-end border-t p-6">
+                    <CardFooter className="flex justify-end border-t p-4 sm:p-6">
                         <Button onClick={() => setStep(2)} disabled={!testData.title || !testData.startTime} className="w-full sm:w-auto gap-2">
                             Next: Add Questions
                             <ArrowRight className="w-4 h-4" />
@@ -277,20 +277,20 @@ const CreateTest = () => {
 
             {step === 2 && (
                 <div className="max-w-4xl mx-auto animate-in slide-in-from-right-4 duration-500">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
                         <div>
-                            <h2 className="text-xl font-bold flex items-center gap-2">
-                                <LayoutList className="w-5 h-5 text-primary" />
+                            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                                <LayoutList className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                                 Questions ({testData.questions.length})
                             </h2>
-                            <p className="text-sm text-muted-foreground">Add manually or import from PDF</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">Add manually or import from PDF</p>
                         </div>
-                        <div className="flex gap-3 w-full sm:w-auto">
-                            <Button variant="outline" onClick={() => setShowPdfModal(true)} className="flex-1 sm:flex-none gap-2">
-                                <Upload className="w-4 h-4" /> Import PDF
+                        <div className="flex gap-2 sm:gap-3 w-full">
+                            <Button variant="outline" onClick={() => setShowPdfModal(true)} className="flex-1 gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                                <Upload className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden xs:inline">Import</span> PDF
                             </Button>
-                            <Button onClick={addQuestion} className="flex-1 sm:flex-none gap-2">
-                                <Plus className="w-4 h-4" /> Add New
+                            <Button onClick={addQuestion} className="flex-1 gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                                <Plus className="w-3 h-3 sm:w-4 sm:h-4" /> Add <span className="hidden xs:inline">New</span>
                             </Button>
                         </div>
                     </div>
@@ -321,73 +321,78 @@ const CreateTest = () => {
                         )}
                     </div>
 
-                    <div className="flex justify-between items-center bg-card p-4 rounded-lg border shadow-sm sticky bottom-4 z-20">
-                        <Button variant="outline" onClick={() => setStep(1)} className="gap-2">
-                            <ArrowLeft className="w-4 h-4" /> Back
+                    <div className="flex justify-between items-center bg-card p-3 sm:p-4 rounded-lg border shadow-sm sticky bottom-2 sm:bottom-4 z-20 gap-2">
+                        <Button variant="outline" onClick={() => setStep(1)} className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" /> Back
                         </Button>
-                        <Button onClick={() => setStep(3)} disabled={testData.questions.length === 0} className="gap-2">
+                        <Button onClick={() => setStep(3)} disabled={testData.questions.length === 0} className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
                             Next: Review
-                            <ArrowRight className="w-4 h-4" />
+                            <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                     </div>
                 </div>
-            )}
+            )
+            }
 
-            {step === 3 && (
-                <div className="max-w-3xl mx-auto animate-in slide-in-from-right-4 duration-500">
-                    <Card className="shadow-lg border-primary/20">
-                        <CardHeader className="bg-muted/30 border-b pb-6">
-                            <CardTitle className="text-2xl">{testData.title}</CardTitle>
-                            <CardDescription className="text-base">{testData.description || "No description provided."}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-8 grid gap-8">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                                <div className="p-4 bg-muted/20 rounded-lg border">
-                                    <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Duration</div>
-                                    <div className="text-2xl font-bold">{testData.duration} <span className="text-sm font-normal text-muted-foreground">mins</span></div>
-                                </div>
-                                <div className="p-4 bg-muted/20 rounded-lg border">
-                                    <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Questions</div>
-                                    <div className="text-2xl font-bold">{testData.questions.length}</div>
-                                </div>
-                                <div className="p-4 bg-muted/20 rounded-lg border">
-                                    <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Total Marks</div>
-                                    <div className="text-2xl font-bold">{testData.questions.length * testData.markingScheme.correct}</div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900">
-                                    <Calendar className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <div className="space-y-1">
-                                        <p className="font-semibold text-sm">Schedule</p>
-                                        <p className="text-sm">
-                                            Available from <span className="font-bold">{new Date(testData.startTime).toLocaleString()}</span> to <span className="font-bold">{new Date(testData.endTime).toLocaleString()}</span>
-                                        </p>
+            {
+                step === 3 && (
+                    <div className="max-w-3xl mx-auto animate-in slide-in-from-right-4 duration-500 px-1">
+                        <Card className="shadow-lg border-primary/20">
+                            <CardHeader className="bg-muted/30 border-b pb-4 sm:pb-6 px-4 sm:px-6">
+                                <CardTitle className="text-xl sm:text-2xl break-words">{testData.title}</CardTitle>
+                                <CardDescription className="text-sm sm:text-base">{testData.description || "No description provided."}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-4 sm:p-8 grid gap-6 sm:gap-8">
+                                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+                                    <div className="p-2 sm:p-4 bg-muted/20 rounded-lg border">
+                                        <div className="text-[8px] sm:text-sm text-muted-foreground font-medium uppercase tracking-wider mb-0.5 sm:mb-1">Duration</div>
+                                        <div className="text-lg sm:text-2xl font-bold">{testData.duration} <span className="text-[10px] sm:text-sm font-normal text-muted-foreground">m</span></div>
+                                    </div>
+                                    <div className="p-2 sm:p-4 bg-muted/20 rounded-lg border">
+                                        <div className="text-[8px] sm:text-sm text-muted-foreground font-medium uppercase tracking-wider mb-0.5 sm:mb-1">Questions</div>
+                                        <div className="text-lg sm:text-2xl font-bold">{testData.questions.length}</div>
+                                    </div>
+                                    <div className="p-2 sm:p-4 bg-muted/20 rounded-lg border">
+                                        <div className="text-[8px] sm:text-sm text-muted-foreground font-medium uppercase tracking-wider mb-0.5 sm:mb-1">Marks</div>
+                                        <div className="text-lg sm:text-2xl font-bold">{testData.questions.length * testData.markingScheme.correct}</div>
                                     </div>
                                 </div>
 
-                                <div className="bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg border border-yellow-100 dark:border-yellow-900 flex gap-3 text-yellow-800 dark:text-yellow-200 text-sm">
-                                    <AlertCircle className="w-5 h-5 shrink-0" />
-                                    <p>
-                                        Please verify all questions and answers before publishing. Once published, students will be able to see this test on their dashboard at the scheduled time.
-                                    </p>
+                                <div className="space-y-3 sm:space-y-4">
+                                    <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900">
+                                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5" />
+                                        <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                                            <p className="font-semibold text-xs sm:text-sm">Schedule</p>
+                                            <p className="text-xs sm:text-sm break-words">
+                                                <span className="font-bold">{new Date(testData.startTime).toLocaleString()}</span>
+                                                <span className="block sm:inline"> to </span>
+                                                <span className="font-bold">{new Date(testData.endTime).toLocaleString()}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 sm:p-4 rounded-lg border border-yellow-100 dark:border-yellow-900 flex gap-2 sm:gap-3 text-yellow-800 dark:text-yellow-200 text-xs sm:text-sm">
+                                        <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                                        <p>
+                                            Verify all questions before publishing. Students will see this test at the scheduled time.
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-between border-t p-6 bg-muted/10">
-                            <Button variant="outline" onClick={() => setStep(2)} className="gap-2">
-                                <ArrowLeft className="w-4 h-4" /> Edit Questions
-                            </Button>
-                            <Button onClick={handleSave} disabled={loading} className="gap-2 shadow-lg hover:shadow-xl transition-all">
-                                {loading ? "Publishing..." : "Publish Test"}
-                                {!loading && <CheckCircle2 className="w-4 h-4" />}
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </div>
-            )}
-        </div>
+                            </CardContent>
+                            <CardFooter className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 border-t p-4 sm:p-6 bg-muted/10">
+                                <Button variant="outline" onClick={() => setStep(2)} className="gap-1 sm:gap-2 w-full sm:w-auto order-2 sm:order-1 text-xs sm:text-sm">
+                                    <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" /> Edit Questions
+                                </Button>
+                                <Button onClick={handleSave} disabled={loading} className="gap-1 sm:gap-2 shadow-lg hover:shadow-xl transition-all w-full sm:w-auto order-1 sm:order-2 text-xs sm:text-sm">
+                                    {loading ? "Publishing..." : "Publish Test"}
+                                    {!loading && <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />}
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
